@@ -1,0 +1,6 @@
+
+@baseUrl = http://localhost:5200/api
+
+### Get weight report
+GET {{baseUrl}}/report
+X-Api-Key: apikey

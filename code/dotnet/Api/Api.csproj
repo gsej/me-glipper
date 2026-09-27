@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.2" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+    <!-- Overrides the vulnerable 2.1.11 pulled transitively by Microsoft.Data.Sqlite
+         (advisory GHSA-2m69-gcr7-jv3q). Remove once Microsoft.Data.Sqlite references a patched bundle. -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.13" />
+  </ItemGroup>
+  
+</Project>

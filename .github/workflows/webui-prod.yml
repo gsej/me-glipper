@@ -1,0 +1,93 @@
+name: webui-prod
+
+on: 
+  workflow_dispatch:
+
+jobs: 
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      WORKING_DIR: code/angular
+      BUILD_OUTPUT_DIR: dist/me-glipper/browser      
+      API_URL: https://frigate.tailbdb963.ts.net
+    
+    steps: 
+      - name: checkout repo
+        uses: actions/checkout@v4
+
+      - name: use node.js
+        uses: actions/setup-node@v4
+
+        with:
+          node-version: '22.x'
+
+      - run: npm install
+        working-directory: ${{ env.WORKING_DIR }}
+
+      - run: npm run build -- --base-href /me-glipper/
+        working-directory: ${{ env.WORKING_DIR }}
+
+      - name: populate settings.json
+        run: |
+          cd ./${WORKING_DIR}/${{ env.BUILD_OUTPUT_DIR }}
+          export GITHASH="$(git rev-parse --short HEAD)"
+          envsubst < settings.template.json > settings.json
+          cat ./settings.json
+
+      - name: upload built angular app
+        uses: actions/upload-artifact@v4
+        with:
+          name: webui
+          path: ${{ env.WORKING_DIR }}/${{ env.BUILD_OUTPUT_DIR }}
+
+  deploy:
+    needs: build
+
+    permissions:
+      contents: write
+      pages: write     
+      id-token: write  
+
+    environment:
+      name: production
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    runs-on: ubuntu-latest
+
+    env:
+      ARTIFACTS_DIR: webui
+    
+    steps:
+    
+      - name: download built angular app
+        uses: actions/download-artifact@v4
+        with:
+          name: webui
+          path: ${{ env.ARTIFACTS_DIR }}
+
+      - name: show directory structure
+        run: |
+          echo "Directory structure:"
+          find ./${{ env.ARTIFACTS_DIR }} -type d -print
+          echo "File structure:"
+          find ./${{ env.ARTIFACTS_DIR }} -type f -print
+
+      - name: select icon
+        run: |
+          cp ./${{ env.ARTIFACTS_DIR }}/icons/icon-scale.prod.svg ./${{ env.ARTIFACTS_DIR }}/icons/icon-scale.svg
+          cp ./${{ env.ARTIFACTS_DIR }}/icons/icon-scale.prod.png ./${{ env.ARTIFACTS_DIR }}/icons/icon-scale.png
+
+      - name: configure github pages
+        uses: actions/configure-pages@v4
+        with:
+          static_site_generator: next
+
+      - name: upload pages artifacts
+        uses: actions/upload-pages-artifact@v3
+        with: 
+          path: ${{ env.ARTIFACTS_DIR}}
+
+      - name: deploy to github pages
+        id: deployment
+        uses: actions/deploy-pages@v4

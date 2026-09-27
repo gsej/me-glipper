@@ -1,0 +1,16 @@
+nohup.out
+.idea
+**/bin/
+**/obj/
+**/*.xlsx*
+**/*.ods*
+**/*lock*ods*
+*DotSettings.user
+*.csv
+*.csv#
+
+# Local SQLite runtime files (e.g. code/dotnet/Api/me-tracker.db)
+*.db
+*.db-wal
+*.db-shm
+

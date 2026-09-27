@@ -1,0 +1,17 @@
+services:
+  api:
+    build:
+      context: ./code/dotnet/Api
+      dockerfile: Dockerfile
+      args:
+        GIT_HASH: ${GIT_HASH:-unknown}
+    ports:
+      - "5200:8080"
+    env_file:
+      - ../me-glipper-private/.env
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - SqliteConnectionString=Data Source=/app/database/me-glipper.db
+    volumes:
+      - ../me-glipper-private/database:/app/database
+    restart: always
