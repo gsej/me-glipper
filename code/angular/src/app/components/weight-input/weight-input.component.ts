@@ -61,7 +61,7 @@ export class WeightInputComponent {
         error: (error) => {
           console.error('Error submitting weight:', error);
           this.status = 'Error';
-          this.errorStatusCode = error.status || 'Unknown';
+          this.errorStatusCode = error.status != null ? String(error.status) : 'Unknown';
           this.clearStatusAfterDelay();
         },
       });

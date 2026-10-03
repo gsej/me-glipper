@@ -56,6 +56,9 @@
               <span> ({{ errorStatusCode }})</span>
             }
           </div>
+          @if (errorStatusCode === '401') {
+            <div class="text-sm text-red-500 mt-1">API key must be supplied</div>
+          }
         </div>
       </div>
     }

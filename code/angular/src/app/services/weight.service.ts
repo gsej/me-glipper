@@ -61,7 +61,7 @@ export class WeightService {
         },
         error: (error) => {
           console.error('Error fetching weight records:', error);
-          this.errorSubject.next(`Error: ${error.status || 'Unknown'}`);
+          this.errorSubject.next(error.status === 401 ? 'Error: 401 - API key must be supplied' : `Error: ${error.status || 'Unknown'}`);
           this.isLoadingSubject.next(false);
         }
       });
