@@ -1,0 +1,22 @@
+<Project>
+
+  <!--
+    Disable the .NET workload resolver for this solution.
+
+    These projects use no workloads (Android/iOS/MacCatalyst/Maui/WASM/Mono), but
+    the resolver still runs on every build. On this Arch machine a `dotnet-sdk`
+    update periodically leaves a stale workload-set pin that references manifest
+    versions the same update removed, which makes every build fail before it even
+    looks at the code:
+
+        error MSB4014: Workload set version X.Y.Z has missing manifests ...
+
+    Turning the resolver off skips that import path entirely. This is safe only
+    because we consume no workloads. There is also a machine-wide mitigation in
+    place, setting the workload update mode to `manifests`.
+  -->
+  <PropertyGroup>
+    <MSBuildEnableWorkloadResolver>false</MSBuildEnableWorkloadResolver>
+  </PropertyGroup>
+
+</Project>
