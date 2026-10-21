@@ -33,7 +33,7 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(s =>
         {
-            s.SchemaFilter<WeightController.WeightRecordExample>();
+            s.SchemaFilter<DoseController.DoseRecordExample>();
             s.CustomSchemaIds(x => x.FullName);
             
             s.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
@@ -53,11 +53,11 @@ public class Program
             });
         });
         
-        builder.Services.AddScoped<DataAccess.WeightRepository>(sp =>
+        builder.Services.AddScoped<DataAccess.DoseRepository>(sp =>
         {
             var configuration = sp.GetRequiredService<IConfiguration>();
             var connectionString = configuration["SqliteConnectionString"];
-            return new DataAccess.WeightRepository(connectionString!);
+            return new DataAccess.DoseRepository(connectionString!);
         });
 
         builder.Services.AddScoped<DataAccess.UserRepository>(sp =>
@@ -68,7 +68,9 @@ public class Program
         });
 
         builder.Services.AddSingleton(new Settings());
-        builder.Services.AddScoped<ReportHandler>();
+        // Report feature is parked during the weight->dose rename (see ReportController /
+        // ReportHandler, commented out). Re-enable when the dose report slice is built.
+        // builder.Services.AddScoped<ReportHandler>();
         
         var app = builder.Build();
 

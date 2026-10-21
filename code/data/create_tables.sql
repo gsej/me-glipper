@@ -3,11 +3,12 @@ CREATE TABLE IF NOT EXISTS Users (
     HeightInCm INTEGER NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS Weights (
-    WeightId TEXT NOT NULL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS Doses (
+    DoseId TEXT NOT NULL PRIMARY KEY,
     UserId TEXT NOT NULL,
-    Date TEXT NOT NULL,
-    Weight TEXT NOT NULL,
+    TakenAt TEXT NOT NULL,
+    MedicationName TEXT NOT NULL,
+    DoseAmountMg TEXT NOT NULL,
     Deleted INTEGER NOT NULL DEFAULT 0,
-    Comment TEXT
+    Notes TEXT
 );

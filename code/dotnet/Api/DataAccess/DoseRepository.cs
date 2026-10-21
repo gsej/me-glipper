@@ -4,11 +4,11 @@ using Microsoft.Data.Sqlite;
 
 namespace Api.DataAccess
 {
-    public class WeightRepository
+    public class DoseRepository
     {
         private readonly string _connectionString;
 
-        public WeightRepository(string connectionString)
+        public DoseRepository(string connectionString)
         {
             _connectionString = connectionString;
             EnsureTablesExist();
@@ -20,21 +20,22 @@ namespace Api.DataAccess
             connection.Open();
             var command = connection.CreateCommand();
             command.CommandText = """
-                CREATE TABLE IF NOT EXISTS Weights (
-                    WeightId TEXT NOT NULL PRIMARY KEY,
+                CREATE TABLE IF NOT EXISTS Doses (
+                    DoseId TEXT NOT NULL PRIMARY KEY,
                     UserId TEXT NOT NULL,
-                    Date TEXT NOT NULL,
-                    Weight TEXT NOT NULL,
+                    TakenAt TEXT NOT NULL,
+                    MedicationName TEXT NOT NULL,
+                    DoseAmountMg TEXT NOT NULL,
                     Deleted INTEGER NOT NULL DEFAULT 0
                 )
                 """;
             command.ExecuteNonQuery();
 
-            AddColumnIfMissing(connection, "Comment", "TEXT");
+            AddColumnIfMissing(connection, "Notes", "TEXT");
         }
 
         /// <summary>
-        /// Adds a column to the Weights table if it isn't already present. SQLite's
+        /// Adds a column to the Doses table if it isn't already present. SQLite's
         /// CREATE TABLE IF NOT EXISTS never alters an existing table, so this keeps a
         /// previously-deployed database in step with the schema without a migration
         /// framework (there are only two environments: local dev and one prod instance).
@@ -42,7 +43,7 @@ namespace Api.DataAccess
         private static void AddColumnIfMissing(SqliteConnection connection, string columnName, string columnType)
         {
             var pragma = connection.CreateCommand();
-            pragma.CommandText = "PRAGMA table_info(Weights)";
+            pragma.CommandText = "PRAGMA table_info(Doses)";
             using (var reader = pragma.ExecuteReader())
             {
                 while (reader.Read())
@@ -55,133 +56,136 @@ namespace Api.DataAccess
             }
 
             var alter = connection.CreateCommand();
-            alter.CommandText = $"ALTER TABLE Weights ADD COLUMN {columnName} {columnType}";
+            alter.CommandText = $"ALTER TABLE Doses ADD COLUMN {columnName} {columnType}";
             alter.ExecuteNonQuery();
         }
 
         /// <summary>
-        /// Gets all undeleted weight entries for a specific user.
+        /// Gets all undeleted dose entries for a specific user.
         /// </summary>
-        public async Task<IEnumerable<WeightEntity>> GetAllAsync(string userId)
+        public async Task<IEnumerable<DoseEntity>> GetAllAsync(string userId)
         {
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT WeightId, UserId, Date, Weight, Deleted, Comment FROM Weights WHERE UserId = $userId AND Deleted = 0";
+            command.CommandText = "SELECT DoseId, UserId, TakenAt, MedicationName, DoseAmountMg, Deleted, Notes FROM Doses WHERE UserId = $userId AND Deleted = 0";
             command.Parameters.AddWithValue("$userId", userId);
 
-            var results = new List<WeightEntity>();
+            var results = new List<DoseEntity>();
             using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                results.Add(ReadWeightEntity(reader));
+                results.Add(ReadDoseEntity(reader));
             }
             return results;
         }
 
         /// <summary>
-        /// Gets all weight entries.
+        /// Gets all dose entries.
         /// </summary>
-        public async Task<IEnumerable<WeightEntity>> GetAllAsync()
+        public async Task<IEnumerable<DoseEntity>> GetAllAsync()
         {
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT WeightId, UserId, Date, Weight, Deleted, Comment FROM Weights";
+            command.CommandText = "SELECT DoseId, UserId, TakenAt, MedicationName, DoseAmountMg, Deleted, Notes FROM Doses";
 
-            var results = new List<WeightEntity>();
+            var results = new List<DoseEntity>();
             using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                results.Add(ReadWeightEntity(reader));
+                results.Add(ReadDoseEntity(reader));
             }
             return results;
         }
 
-        public async Task<WeightEntity?> GetByIdAsync(Guid weightId, string userId)
+        public async Task<DoseEntity?> GetByIdAsync(Guid doseId, string userId)
         {
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT WeightId, UserId, Date, Weight, Deleted, Comment FROM Weights WHERE WeightId = $weightId AND UserId = $userId AND Deleted = 0";
-            command.Parameters.AddWithValue("$weightId", weightId.ToString());
+            command.CommandText = "SELECT DoseId, UserId, TakenAt, MedicationName, DoseAmountMg, Deleted, Notes FROM Doses WHERE DoseId = $doseId AND UserId = $userId AND Deleted = 0";
+            command.Parameters.AddWithValue("$doseId", doseId.ToString());
             command.Parameters.AddWithValue("$userId", userId);
 
             using var reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                return ReadWeightEntity(reader);
+                return ReadDoseEntity(reader);
             }
             return null;
         }
 
-        public async Task AddAsync(WeightEntity entity)
+        public async Task AddAsync(DoseEntity entity)
         {
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = "INSERT INTO Weights (WeightId, UserId, Date, Weight, Deleted, Comment) VALUES ($weightId, $userId, $date, $weight, $deleted, $comment)";
-            command.Parameters.AddWithValue("$weightId", entity.WeightId.ToString());
+            command.CommandText = "INSERT INTO Doses (DoseId, UserId, TakenAt, MedicationName, DoseAmountMg, Deleted, Notes) VALUES ($doseId, $userId, $takenAt, $medicationName, $doseAmountMg, $deleted, $notes)";
+            command.Parameters.AddWithValue("$doseId", entity.DoseId.ToString());
             command.Parameters.AddWithValue("$userId", entity.UserId);
-            command.Parameters.AddWithValue("$date", ToUtc(entity.Date).ToString("O"));
-            command.Parameters.AddWithValue("$weight", entity.Weight.ToString(CultureInfo.InvariantCulture));
+            command.Parameters.AddWithValue("$takenAt", ToUtc(entity.TakenAt).ToString("O"));
+            command.Parameters.AddWithValue("$medicationName", entity.MedicationName);
+            command.Parameters.AddWithValue("$doseAmountMg", entity.DoseAmountMg.ToString(CultureInfo.InvariantCulture));
             command.Parameters.AddWithValue("$deleted", entity.Deleted ? 1 : 0);
-            command.Parameters.AddWithValue("$comment", (object?)NormaliseComment(entity.Comment) ?? DBNull.Value);
+            command.Parameters.AddWithValue("$notes", (object?)NormaliseNotes(entity.Notes) ?? DBNull.Value);
             await command.ExecuteNonQueryAsync();
         }
 
-        public async Task UpdateAsync(WeightEntity entity)
+        public async Task UpdateAsync(DoseEntity entity)
         {
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = "UPDATE Weights SET Date = $date, Weight = $weight, Deleted = $deleted, Comment = $comment WHERE WeightId = $weightId";
-            command.Parameters.AddWithValue("$date", ToUtc(entity.Date).ToString("O"));
-            command.Parameters.AddWithValue("$weight", entity.Weight.ToString(CultureInfo.InvariantCulture));
+            command.CommandText = "UPDATE Doses SET TakenAt = $takenAt, MedicationName = $medicationName, DoseAmountMg = $doseAmountMg, Deleted = $deleted, Notes = $notes WHERE DoseId = $doseId";
+            command.Parameters.AddWithValue("$takenAt", ToUtc(entity.TakenAt).ToString("O"));
+            command.Parameters.AddWithValue("$medicationName", entity.MedicationName);
+            command.Parameters.AddWithValue("$doseAmountMg", entity.DoseAmountMg.ToString(CultureInfo.InvariantCulture));
             command.Parameters.AddWithValue("$deleted", entity.Deleted ? 1 : 0);
-            command.Parameters.AddWithValue("$comment", (object?)NormaliseComment(entity.Comment) ?? DBNull.Value);
-            command.Parameters.AddWithValue("$weightId", entity.WeightId.ToString());
+            command.Parameters.AddWithValue("$notes", (object?)NormaliseNotes(entity.Notes) ?? DBNull.Value);
+            command.Parameters.AddWithValue("$doseId", entity.DoseId.ToString());
             await command.ExecuteNonQueryAsync();
         }
 
-        public async Task HardDeleteAsync(WeightEntity entity)
+        public async Task HardDeleteAsync(DoseEntity entity)
         {
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = "DELETE FROM Weights WHERE WeightId = $weightId";
-            command.Parameters.AddWithValue("$weightId", entity.WeightId.ToString());
+            command.CommandText = "DELETE FROM Doses WHERE DoseId = $doseId";
+            command.Parameters.AddWithValue("$doseId", entity.DoseId.ToString());
             await command.ExecuteNonQueryAsync();
         }
 
-        public async Task DeleteAsync(WeightEntity entity)
+        public async Task DeleteAsync(DoseEntity entity)
         {
             entity.Deleted = true;
             await UpdateAsync(entity);
         }
 
-        private static WeightEntity ReadWeightEntity(SqliteDataReader reader)
+        private static DoseEntity ReadDoseEntity(SqliteDataReader reader)
         {
-            return new WeightEntity(
+            return new DoseEntity(
                 Guid.Parse(reader.GetString(0)),
                 reader.GetString(1),
                 ToUtc(DateTime.Parse(reader.GetString(2), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)),
-                decimal.Parse(reader.GetString(3), CultureInfo.InvariantCulture),
-                reader.GetInt32(4) != 0,
-                reader.IsDBNull(5) ? null : reader.GetString(5)
+                reader.GetString(3),
+                decimal.Parse(reader.GetString(4), CultureInfo.InvariantCulture),
+                reader.GetInt32(5) != 0,
+                reader.IsDBNull(6) ? null : reader.GetString(6)
             );
         }
 
         /// <summary>
-        /// Normalises a comment so that empty or whitespace-only text is stored as NULL
+        /// Normalises notes so that empty or whitespace-only text is stored as NULL
         /// rather than an empty string. This keeps display logic to a simple
         /// "show only when present" check and keeps the data clean.
         /// </summary>
-        private static string? NormaliseComment(string? comment) =>
-            string.IsNullOrWhiteSpace(comment) ? null : comment.Trim();
+        private static string? NormaliseNotes(string? notes) =>
+            string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
 
         /// <summary>
-        /// Normalises a date to UTC so weights are stored and returned as UTC regardless of the
+        /// Normalises a date to UTC so doses are stored and returned as UTC regardless of the
         /// server's timezone. A Local value is converted; an Unspecified value is assumed to
         /// already be UTC (relabelled without shifting the clock).
         /// </summary>

@@ -1,0 +1,36 @@
+me-glipper — ongoing work
+==========================
+
+Being rebuilt from me-tracker (weight tracking) into a GLP-1 dose tracker, UI-first,
+in vertical slices.
+
+Done
+----
+- Slice 1: "Add dose" data-entry page, end to end.
+  - Backend: Weight domain renamed to Dose. Dose entity/record/requests/collection,
+    DoseRepository (Doses table: DoseId, UserId, TakenAt, MedicationName, DoseAmountMg,
+    Deleted, Notes), DoseController (api/dose, api/doses). Backup updated. 43 tests green.
+  - Frontend: DoseService + dose-input component (date, time, medication dropdown,
+    dose mg, notes) on page 1. History/report pages are placeholders.
+
+Parked (re-enable in later slices)
+----------------------------------
+- Report feature: ReportController + ReportHandler are commented out (weight/BMI-specific,
+  depended on the old Weight types). ReportHandlerTests + the report integration tests are
+  commented out too. Rebuild as a dose report slice.
+- Settings.AverageWeightWindowInDays is weight-report-specific; left in place, unused.
+
+Next slices (not started)
+-------------------------
+- Dose history page (list of doses, edit notes, delete) — DoseService already has
+  loadDoses / updateNotes / deleteDose.
+- Dose report / "estimated levels" chart (pharmacokinetic projection per medication).
+- Medication list: currently hard-coded (Semaglutide, Tirzepatide, Retatrutide) and
+  dose unit fixed to mg — revisit if this needs to be configurable.
+
+Known gaps / cleanup
+--------------------
+- CLAUDE.md still documents some endpoints/fields under their old weight names
+  (e.g. PUT /api/weight, the Comment field) — update to the dose names.
+- Private backups (me-glipper-private/backups) hold old weight data in the old schema;
+  they won't restore into the new Doses table.

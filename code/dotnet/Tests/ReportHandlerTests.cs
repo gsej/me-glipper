@@ -1,3 +1,6 @@
+// Parked during the weight->dose rename: ReportHandler (and WeightEntity) no longer
+// exist in the dose domain. Restore alongside the dose report slice.
+/*
 using Api;
 using Api.Controllers.Models;
 using Api.Controllers.Report;
@@ -192,3 +195,4 @@ public class ReportHandlerTests
         }
     }
 }
+*/

@@ -1,6 +1,8 @@
 
 @baseUrl = http://localhost:5200/api
 
-### Get weight report
+### Get report
+### NOTE: parked during the weight->dose rename. The report endpoint (ReportController)
+### is commented out and returns 404 until the dose report slice is built.
 GET {{baseUrl}}/report
 X-Api-Key: apikey

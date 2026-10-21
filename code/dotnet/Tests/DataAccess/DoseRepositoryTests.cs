@@ -6,15 +6,15 @@ using Microsoft.Data.Sqlite;
 
 namespace Tests.DataAccess;
 
-public class WeightRepositoryTests : IDisposable
+public class DoseRepositoryTests : IDisposable
 {
     private readonly string _dbPath =
-        Path.Combine(Path.GetTempPath(), $"weight-repo-tests-{Guid.NewGuid():N}.db");
-    private readonly WeightRepository _repository;
+        Path.Combine(Path.GetTempPath(), $"dose-repo-tests-{Guid.NewGuid():N}.db");
+    private readonly DoseRepository _repository;
 
-    public WeightRepositoryTests()
+    public DoseRepositoryTests()
     {
-        _repository = new WeightRepository($"Data Source={_dbPath}");
+        _repository = new DoseRepository($"Data Source={_dbPath}");
     }
 
     public void Dispose()
@@ -26,20 +26,21 @@ public class WeightRepositoryTests : IDisposable
     public async Task AddThenGetById_RoundTripsAllFields()
     {
         var id = Guid.NewGuid();
-        var date = new DateTime(2025, 1, 15, 6, 30, 0, DateTimeKind.Utc);
-        await _repository.AddAsync(new WeightEntity(id, "alice", date, 82.5m, false));
+        var takenAt = new DateTime(2025, 1, 15, 6, 30, 0, DateTimeKind.Utc);
+        await _repository.AddAsync(new DoseEntity(id, "alice", takenAt, "Semaglutide", 1.0m, false));
 
         var loaded = await _repository.GetByIdAsync(id, "alice");
 
         using var _ = new AssertionScope();
         loaded.Should().NotBeNull();
-        loaded!.WeightId.Should().Be(id);
+        loaded!.DoseId.Should().Be(id);
         loaded.UserId.Should().Be("alice");
-        loaded.Weight.Should().Be(82.5m);
+        loaded.MedicationName.Should().Be("Semaglutide");
+        loaded.DoseAmountMg.Should().Be(1.0m);
         loaded.Deleted.Should().BeFalse();
         // Guards the "dates as UTC regardless of server timezone" behaviour.
-        loaded.Date.Should().Be(date);
-        loaded.Date.Kind.Should().Be(DateTimeKind.Utc);
+        loaded.TakenAt.Should().Be(takenAt);
+        loaded.TakenAt.Kind.Should().Be(DateTimeKind.Utc);
     }
 
     [Fact]
@@ -47,9 +48,9 @@ public class WeightRepositoryTests : IDisposable
     {
         // The parameterless overload backs the backup endpoint, which must read everything:
         // all users, including soft-deleted rows.
-        await _repository.AddAsync(new WeightEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 1), 80m, false));
-        await _repository.AddAsync(new WeightEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 2), 81m, true));
-        await _repository.AddAsync(new WeightEntity(Guid.NewGuid(), "bob", new DateTime(2025, 1, 3), 90m, false));
+        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 1), "Semaglutide", 1.0m, false));
+        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 2), "Semaglutide", 1.0m, true));
+        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "bob", new DateTime(2025, 1, 3), "Tirzepatide", 2.5m, false));
 
         var all = (await _repository.GetAllAsync()).ToList();
 
@@ -65,12 +66,12 @@ public class WeightRepositoryTests : IDisposable
         // enforcing the "dates as UTC regardless of server timezone" invariant.
         var id = Guid.NewGuid();
         var unspecified = new DateTime(2025, 1, 15, 6, 30, 0, DateTimeKind.Unspecified);
-        await _repository.AddAsync(new WeightEntity(id, "alice", unspecified, 82.5m, false));
+        await _repository.AddAsync(new DoseEntity(id, "alice", unspecified, "Semaglutide", 1.0m, false));
 
         var loaded = await _repository.GetByIdAsync(id, "alice");
 
-        loaded!.Date.Kind.Should().Be(DateTimeKind.Utc);
-        loaded.Date.Should().Be(new DateTime(2025, 1, 15, 6, 30, 0, DateTimeKind.Utc));
+        loaded!.TakenAt.Kind.Should().Be(DateTimeKind.Utc);
+        loaded.TakenAt.Should().Be(new DateTime(2025, 1, 15, 6, 30, 0, DateTimeKind.Utc));
     }
 
     [Fact]
@@ -79,19 +80,19 @@ public class WeightRepositoryTests : IDisposable
         // A Local-kind date is converted (not just relabelled) to the equivalent UTC instant.
         var id = Guid.NewGuid();
         var local = new DateTime(2025, 1, 15, 6, 30, 0, DateTimeKind.Local);
-        await _repository.AddAsync(new WeightEntity(id, "alice", local, 82.5m, false));
+        await _repository.AddAsync(new DoseEntity(id, "alice", local, "Semaglutide", 1.0m, false));
 
         var loaded = await _repository.GetByIdAsync(id, "alice");
 
-        loaded!.Date.Kind.Should().Be(DateTimeKind.Utc);
-        loaded.Date.Should().Be(local.ToUniversalTime());
+        loaded!.TakenAt.Kind.Should().Be(DateTimeKind.Utc);
+        loaded.TakenAt.Should().Be(local.ToUniversalTime());
     }
 
     [Fact]
     public async Task GetByIdAsync_DoesNotReturnAnotherUsersRecord()
     {
         var id = Guid.NewGuid();
-        await _repository.AddAsync(new WeightEntity(id, "alice", new DateTime(2025, 1, 15), 82.5m, false));
+        await _repository.AddAsync(new DoseEntity(id, "alice", new DateTime(2025, 1, 15), "Semaglutide", 1.0m, false));
 
         var asBob = await _repository.GetByIdAsync(id, "bob");
 
@@ -101,21 +102,21 @@ public class WeightRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllAsync_FiltersByUserAndExcludesDeleted()
     {
-        await _repository.AddAsync(new WeightEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 1), 80m, false));
-        await _repository.AddAsync(new WeightEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 2), 81m, true));
-        await _repository.AddAsync(new WeightEntity(Guid.NewGuid(), "bob", new DateTime(2025, 1, 3), 90m, false));
+        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 1), "Semaglutide", 1.0m, false));
+        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 2), "Semaglutide", 1.0m, true));
+        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "bob", new DateTime(2025, 1, 3), "Tirzepatide", 2.5m, false));
 
         var aliceRecords = (await _repository.GetAllAsync("alice")).ToList();
 
         aliceRecords.Should().ContainSingle();
-        aliceRecords[0].Weight.Should().Be(80m);
+        aliceRecords[0].DoseAmountMg.Should().Be(1.0m);
     }
 
     [Fact]
     public async Task DeleteAsync_SoftDeletes_RowRemainsButIsExcludedFromReads()
     {
         var id = Guid.NewGuid();
-        var entity = new WeightEntity(id, "alice", new DateTime(2025, 1, 15), 82.5m, false);
+        var entity = new DoseEntity(id, "alice", new DateTime(2025, 1, 15), "Semaglutide", 1.0m, false);
         await _repository.AddAsync(entity);
 
         await _repository.DeleteAsync(entity);
@@ -124,14 +125,14 @@ public class WeightRepositoryTests : IDisposable
         (await _repository.GetByIdAsync(id, "alice")).Should().BeNull();
         (await _repository.GetAllAsync("alice")).Should().BeEmpty();
         // Still physically present (backup reads everything, including deleted).
-        (await _repository.GetAllAsync()).Should().ContainSingle(e => e.WeightId == id && e.Deleted);
+        (await _repository.GetAllAsync()).Should().ContainSingle(e => e.DoseId == id && e.Deleted);
     }
 
     [Fact]
     public async Task HardDeleteAsync_RemovesTheRowEntirely()
     {
         var id = Guid.NewGuid();
-        var entity = new WeightEntity(id, "alice", new DateTime(2025, 1, 15), 82.5m, false);
+        var entity = new DoseEntity(id, "alice", new DateTime(2025, 1, 15), "Semaglutide", 1.0m, false);
         await _repository.AddAsync(entity);
 
         await _repository.HardDeleteAsync(entity);
@@ -140,67 +141,67 @@ public class WeightRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task AddThenGetById_RoundTripsTheComment()
+    public async Task AddThenGetById_RoundTripsTheNotes()
     {
         var id = Guid.NewGuid();
         await _repository.AddAsync(
-            new WeightEntity(id, "alice", new DateTime(2025, 1, 15), 82.5m, false, "after a big lunch"));
+            new DoseEntity(id, "alice", new DateTime(2025, 1, 15), "Semaglutide", 1.0m, false, "first dose of the week"));
 
         var loaded = await _repository.GetByIdAsync(id, "alice");
 
-        loaded!.Comment.Should().Be("after a big lunch");
+        loaded!.Notes.Should().Be("first dose of the week");
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task AddAsync_NormalisesEmptyOrWhitespaceCommentToNull(string? comment)
+    public async Task AddAsync_NormalisesEmptyOrWhitespaceNotesToNull(string? notes)
     {
         var id = Guid.NewGuid();
         await _repository.AddAsync(
-            new WeightEntity(id, "alice", new DateTime(2025, 1, 15), 82.5m, false, comment));
+            new DoseEntity(id, "alice", new DateTime(2025, 1, 15), "Semaglutide", 1.0m, false, notes));
 
         var loaded = await _repository.GetByIdAsync(id, "alice");
 
-        loaded!.Comment.Should().BeNull();
+        loaded!.Notes.Should().BeNull();
     }
 
     [Fact]
-    public async Task AddAsync_TrimsSurroundingWhitespaceFromComment()
+    public async Task AddAsync_TrimsSurroundingWhitespaceFromNotes()
     {
         var id = Guid.NewGuid();
         await _repository.AddAsync(
-            new WeightEntity(id, "alice", new DateTime(2025, 1, 15), 82.5m, false, "  post-run  "));
+            new DoseEntity(id, "alice", new DateTime(2025, 1, 15), "Semaglutide", 1.0m, false, "  felt fine  "));
 
         var loaded = await _repository.GetByIdAsync(id, "alice");
 
-        loaded!.Comment.Should().Be("post-run");
+        loaded!.Notes.Should().Be("felt fine");
     }
 
     [Fact]
-    public async Task UpdateAsync_SetsAndClearsTheComment()
+    public async Task UpdateAsync_SetsAndClearsTheNotes()
     {
         var id = Guid.NewGuid();
-        var entity = new WeightEntity(id, "alice", new DateTime(2025, 1, 15), 82.5m, false);
+        var entity = new DoseEntity(id, "alice", new DateTime(2025, 1, 15), "Semaglutide", 1.0m, false);
         await _repository.AddAsync(entity);
 
-        entity.Comment = "felt bloated";
+        entity.Notes = "mild nausea";
         await _repository.UpdateAsync(entity);
-        (await _repository.GetByIdAsync(id, "alice"))!.Comment.Should().Be("felt bloated");
+        (await _repository.GetByIdAsync(id, "alice"))!.Notes.Should().Be("mild nausea");
 
-        entity.Comment = null;
+        entity.Notes = null;
         await _repository.UpdateAsync(entity);
-        (await _repository.GetByIdAsync(id, "alice"))!.Comment.Should().BeNull();
+        (await _repository.GetByIdAsync(id, "alice"))!.Notes.Should().BeNull();
     }
 
     [Fact]
-    public async Task Constructor_AddsCommentColumnToAPreExistingTableWithoutIt()
+    public async Task Constructor_AddsNotesColumnToAPreExistingTableWithoutIt()
     {
-        // Simulate a database deployed before the Comment column existed: create the
-        // old-shape Weights table by hand, then construct the repository against it.
+        // Simulate a database deployed before the Notes column existed: create the
+        // old-shape Doses table by hand, then construct the repository against it.
         // The guarded ALTER TABLE must add the column so reads/writes still work.
-        var legacyDbPath = Path.Combine(Path.GetTempPath(), $"weight-repo-legacy-{Guid.NewGuid():N}.db");
+        var legacyDbPath = Path.Combine(Path.GetTempPath(), $"dose-repo-legacy-{Guid.NewGuid():N}.db");
         try
         {
             using (var connection = new SqliteConnection($"Data Source={legacyDbPath}"))
@@ -208,26 +209,27 @@ public class WeightRepositoryTests : IDisposable
                 connection.Open();
                 var create = connection.CreateCommand();
                 create.CommandText = """
-                    CREATE TABLE Weights (
-                        WeightId TEXT NOT NULL PRIMARY KEY,
+                    CREATE TABLE Doses (
+                        DoseId TEXT NOT NULL PRIMARY KEY,
                         UserId TEXT NOT NULL,
-                        Date TEXT NOT NULL,
-                        Weight TEXT NOT NULL,
+                        TakenAt TEXT NOT NULL,
+                        MedicationName TEXT NOT NULL,
+                        DoseAmountMg TEXT NOT NULL,
                         Deleted INTEGER NOT NULL DEFAULT 0
                     )
                     """;
                 create.ExecuteNonQuery();
             }
 
-            var repository = new WeightRepository($"Data Source={legacyDbPath}");
+            var repository = new DoseRepository($"Data Source={legacyDbPath}");
             // A second construction must be a no-op (column already present).
-            _ = new WeightRepository($"Data Source={legacyDbPath}");
+            _ = new DoseRepository($"Data Source={legacyDbPath}");
 
             var id = Guid.NewGuid();
             await repository.AddAsync(
-                new WeightEntity(id, "alice", new DateTime(2025, 1, 15), 82.5m, false, "migrated fine"));
+                new DoseEntity(id, "alice", new DateTime(2025, 1, 15), "Semaglutide", 1.0m, false, "migrated fine"));
 
-            (await repository.GetByIdAsync(id, "alice"))!.Comment.Should().Be("migrated fine");
+            (await repository.GetByIdAsync(id, "alice"))!.Notes.Should().Be("migrated fine");
         }
         finally
         {
