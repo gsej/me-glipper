@@ -1,9 +1,9 @@
-### Get backup data (all users + all weights)
+### Get backup data (all users + all doses)
 GET http://localhost:5200/api/backup
 Content-Type: application/json
 X-Api-Key: apikey
 
-### Restore data (users + weights)
+### Restore data (users + doses)
 POST http://localhost:5200/api/backup/restore
 Content-Type: application/json
 X-Api-Key: apikey
@@ -12,19 +12,21 @@ X-Api-Key: apikey
   "users": [
     { "userId": "ApiUser", "heightInCm": 150 }
   ],
-  "weightRecords": [
+  "doseRecords": [
     {
-      "weightId": "955c82e8-124a-427b-9160-358db7e51e41",
+      "doseId": "955c82e8-124a-427b-9160-358db7e51e41",
       "userId": "ApiUser",
-      "date": "2025-04-18T07:23:29.049Z",
-      "weight": 12,
+      "takenAt": "2025-04-18T07:23:29.049Z",
+      "medicationName": "Semaglutide",
+      "doseAmountMg": 1.0,
       "deleted": true
     },
     {
-      "weightId": "5bf0a60a-58d9-4136-8b4c-85a82e34fb02",
+      "doseId": "5bf0a60a-58d9-4136-8b4c-85a82e34fb02",
       "userId": "ApiUser",
-      "date": "2025-04-18T07:24:00.591Z",
-      "weight": 43,
+      "takenAt": "2025-04-18T07:24:00.591Z",
+      "medicationName": "Tirzepatide",
+      "doseAmountMg": 2.5,
       "deleted": false
     }
   ]
@@ -37,5 +39,5 @@ X-Api-Key: apikey
 
 {
   "users": [],
-  "weightRecords": []
+  "doseRecords": []
 }

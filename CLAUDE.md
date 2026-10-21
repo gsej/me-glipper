@@ -20,7 +20,6 @@ are valued.
 - `code/angular/` — Angular PWA frontend.
 - `code/tests/rest/` — `.http` files for hitting the API by hand.
 - `code/tests/jest/` — Jest setup (frontend).
-- `data/create_tables.sql` — reference schema (tables are also auto-created by the repositories).
 
 ## Toolchain (current)
 
@@ -73,15 +72,16 @@ of `apikey` (user `ApiUser`). The Angular app reads `apiUrl` at runtime from
   one user must never read another's data. Keep it covered by tests.
 - **Doses are soft-deleted** (a `Deleted` flag); normal reads exclude them, the
   backup endpoint reads everything.
-- **An entry carries an optional free-text `Comment`** — nullable, capped at
+- **A dose carries optional free-text `Notes`** — nullable, capped at
   200 chars (via `[MaxLength]` on the request records; `[ApiController]` turns that
   into an automatic `400`), with empty/whitespace normalised to `NULL` in the
-  repository. Set it on create, or edit it later via `PUT /api/weight/{id}`.
-  (Named against the current `weight`-based code, pending the dose rename refactor.)
-- **Schema changes use a guarded `ALTER TABLE`, not a migration framework** —
-  `WeightRepository.EnsureTablesExist` adds any missing column idempotently
-  (checking `PRAGMA table_info` first), so a deployed database picks up new columns
-  on next start. This is how `Comment` was added; follow the same pattern.
+  repository. Set it on create, or edit it later via `PUT /api/dose/{id}`. Use the
+  name **`Notes`** consistently (entity/column/request/API/service/UI) — never `Comment`.
+- **Tables are created from code, not a migration framework** —
+  `DoseRepository.EnsureTablesExist` runs `CREATE TABLE IF NOT EXISTS` with the full
+  schema on startup. There is no support for migrating a pre-existing database to a new
+  shape; a schema change means dropping/recreating the local dev DB (and restoring the
+  single prod instance from a backup). Add new columns to the `CREATE TABLE` directly.
 - **Dates are stored/returned as UTC** regardless of server timezone (there's a
   regression test guarding this) — preserve that when touching the data layer.
 - SQLite persistence stores dates as ISO `"O"` and decimals with `InvariantCulture`.

@@ -26,18 +26,18 @@ public class BackupApiTests : IDisposable
     {
         var client = _factory.CreateClientWithKey(ApiTestFactory.AliceKey);
 
-        // Weights present but users omitted: a restore must carry both sections.
+        // Doses present but users omitted: a restore must carry both sections.
         var response = await client.PostAsJsonAsync("/api/backup/restore",
             new Backup(null, new[]
             {
-                new WeightRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 1), 80m, false),
+                new DoseRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 1), "Semaglutide", 1.0m, false),
             }));
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task Restore_ReplacesAllUsersAndWeights()
+    public async Task Restore_ReplacesAllUsersAndDoses()
     {
         var client = _factory.CreateClientWithKey(ApiTestFactory.AliceKey);
 
@@ -45,8 +45,8 @@ public class BackupApiTests : IDisposable
             new[] { new User(ApiTestFactory.AliceUserId, 180) },
             new[]
             {
-                new WeightRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 1), 80m, false),
-                new WeightRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 2), 81m, false),
+                new DoseRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 1), "Semaglutide", 1.0m, false),
+                new DoseRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 2), "Semaglutide", 1.0m, false),
             });
         await client.PostAsJsonAsync("/api/backup/restore", original);
 
@@ -54,7 +54,7 @@ public class BackupApiTests : IDisposable
             new[] { new User(ApiTestFactory.AliceUserId, 175) },
             new[]
             {
-                new WeightRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 2, 1), 79m, false),
+                new DoseRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 2, 1), "Tirzepatide", 2.5m, false),
             });
         await client.PostAsJsonAsync("/api/backup/restore", replacement);
 
@@ -64,13 +64,14 @@ public class BackupApiTests : IDisposable
         users.Should().ContainSingle();
         users[0].heightInCm.Should().Be(175);
 
-        var records = backup.WeightRecords!.ToList();
+        var records = backup.DoseRecords!.ToList();
         records.Should().ContainSingle();
-        records[0].Weight.Should().Be(79m);
+        records[0].MedicationName.Should().Be("Tirzepatide");
+        records[0].DoseAmountMg.Should().Be(2.5m);
     }
 
     [Fact]
-    public async Task Restore_RoundTripsComments()
+    public async Task Restore_RoundTripsNotes()
     {
         var client = _factory.CreateClientWithKey(ApiTestFactory.AliceKey);
 
@@ -78,20 +79,20 @@ public class BackupApiTests : IDisposable
             new[] { new User(ApiTestFactory.AliceUserId, 180) },
             new[]
             {
-                new WeightRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 1), 80m, false, "new year"),
-                new WeightRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 2), 81m, false),
+                new DoseRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 1), "Semaglutide", 1.0m, false, "first dose"),
+                new DoseRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 2), "Semaglutide", 1.0m, false),
             }));
 
         var backup = await client.GetFromJsonAsync<Backup>("/api/backup");
 
-        var records = backup!.WeightRecords!.OrderBy(r => r.Date).ToList();
+        var records = backup!.DoseRecords!.OrderBy(r => r.TakenAt).ToList();
         records.Should().HaveCount(2);
-        records[0].Comment.Should().Be("new year");
-        records[1].Comment.Should().BeNull();
+        records[0].Notes.Should().Be("first dose");
+        records[1].Notes.Should().BeNull();
     }
 
     [Fact]
-    public async Task Backup_IncludesSoftDeletedWeights()
+    public async Task Backup_IncludesSoftDeletedDoses()
     {
         var client = _factory.CreateClientWithKey(ApiTestFactory.AliceKey);
 
@@ -99,13 +100,13 @@ public class BackupApiTests : IDisposable
             new[] { new User(ApiTestFactory.AliceUserId, 180) },
             new[]
             {
-                new WeightRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 1), 80m, false),
-                new WeightRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 2), 81m, true),
+                new DoseRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 1), "Semaglutide", 1.0m, false),
+                new DoseRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 2), "Semaglutide", 1.0m, true),
             }));
 
         var backup = await client.GetFromJsonAsync<Backup>("/api/backup");
 
-        backup!.WeightRecords!.Should().HaveCount(2);
-        backup.WeightRecords!.Should().Contain(r => r.Deleted);
+        backup!.DoseRecords!.Should().HaveCount(2);
+        backup.DoseRecords!.Should().Contain(r => r.Deleted);
     }
 }

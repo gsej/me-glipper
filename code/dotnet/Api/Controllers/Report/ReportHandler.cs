@@ -1,3 +1,6 @@
+// Parked during the weight->dose rename. Weight/BMI-specific logic over WeightEntity,
+// which no longer exists. Rebuilt as its own slice once the dose report is designed.
+/*
 using Api.Controllers.Models;
 
 namespace Api.Controllers.Report;
@@ -121,3 +124,4 @@ public class ReportHandler
         return weeksChange;
     }
 }
+*/

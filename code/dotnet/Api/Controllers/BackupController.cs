@@ -11,12 +11,12 @@ namespace Api.Controllers;
 public class BackupController : ControllerBase
 {
     private readonly UserRepository _userRepository;
-    private readonly WeightRepository _weightRepository;
+    private readonly DoseRepository _doseRepository;
 
-    public BackupController(UserRepository userRepository, WeightRepository weightRepository)
+    public BackupController(UserRepository userRepository, DoseRepository doseRepository)
     {
         _userRepository = userRepository;
-        _weightRepository = weightRepository;
+        _doseRepository = doseRepository;
     }
 
     [HttpGet]
@@ -25,30 +25,31 @@ public class BackupController : ControllerBase
         var users = (await _userRepository.GetAllAsync())
             .Select(entity => new User(entity.UserId, entity.HeightInCm));
 
-        var weightRecords = (await _weightRepository.GetAllAsync())
-            .Select(entity => new WeightRecord(
-                entity.WeightId,
+        var doseRecords = (await _doseRepository.GetAllAsync())
+            .Select(entity => new DoseRecord(
+                entity.DoseId,
                 entity.UserId,
-                entity.Date,
-                entity.Weight,
+                entity.TakenAt,
+                entity.MedicationName,
+                entity.DoseAmountMg,
                 entity.Deleted,
-                entity.Comment))
-            .OrderBy(record => record.Date);
+                entity.Notes))
+            .OrderBy(record => record.TakenAt);
 
-        return new Backup(users, weightRecords);
+        return new Backup(users, doseRecords);
     }
 
     [HttpPost("restore")]
     public async Task<IActionResult> Restore([FromBody] Backup? backup)
     {
         // A restore is a full snapshot, so both sections are required.
-        if (backup?.Users == null || backup.WeightRecords == null)
+        if (backup?.Users == null || backup.DoseRecords == null)
             return BadRequest("No records provided");
 
-        // Wipe everything, then re-insert users before weights.
-        foreach (var entity in await _weightRepository.GetAllAsync())
+        // Wipe everything, then re-insert users before doses.
+        foreach (var entity in await _doseRepository.GetAllAsync())
         {
-            await _weightRepository.HardDeleteAsync(entity);
+            await _doseRepository.HardDeleteAsync(entity);
         }
         foreach (var entity in await _userRepository.GetAllAsync())
         {
@@ -59,15 +60,16 @@ public class BackupController : ControllerBase
         {
             await _userRepository.AddAsync(new UserEntity(user.UserId, user.heightInCm));
         }
-        foreach (var weightRecord in backup.WeightRecords)
+        foreach (var doseRecord in backup.DoseRecords)
         {
-            await _weightRepository.AddAsync(new WeightEntity(
-                weightRecord.WeightId == Guid.Empty ? Guid.NewGuid() : weightRecord.WeightId,
-                weightRecord.UserId,
-                weightRecord.Date,
-                weightRecord.Weight,
-                weightRecord.Deleted,
-                weightRecord.Comment));
+            await _doseRepository.AddAsync(new DoseEntity(
+                doseRecord.DoseId == Guid.Empty ? Guid.NewGuid() : doseRecord.DoseId,
+                doseRecord.UserId,
+                doseRecord.TakenAt,
+                doseRecord.MedicationName,
+                doseRecord.DoseAmountMg,
+                doseRecord.Deleted,
+                doseRecord.Notes));
         }
 
         return Ok();

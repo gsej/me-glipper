@@ -1,6 +1,8 @@
 # me-glipper
 
-A personal weight tracking app with an Angular frontend and a .NET backend API.
+A personal GLP-1 dose tracking app with an Angular frontend and a .NET backend API.
+Records GLP-1 doses (when taken, medication, dose in mg, notes) per user. Forked from
+a weight-tracking app (`me-tracker`); the weight → dose rename is in progress — see `TODO`.
 
 ## Architecture
 

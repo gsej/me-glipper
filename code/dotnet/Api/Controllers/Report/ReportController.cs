@@ -1,3 +1,8 @@
+// Parked during the weight->dose rename. This controller is weight/BMI-specific and
+// depends on WeightRepository/WeightEntity, which no longer exist. It will be rebuilt as
+// its own slice once the dose report is designed. Commented out wholesale (rather than
+// mechanically renamed) so no throwaway edits accumulate on soon-to-be-replaced code.
+/*
 using Api.Controllers.Models;
 using Api.DataAccess;
 using Api.Filters;
@@ -15,9 +20,9 @@ public class ReportController : ControllerBase
     private readonly ReportHandler _reportHandler;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ReportController( 
-        ReportHandler reportHandler, 
-        IHttpContextAccessor httpContextAccessor, 
+    public ReportController(
+        ReportHandler reportHandler,
+        IHttpContextAccessor httpContextAccessor,
         WeightRepository weightRepository,
         UserRepository userRepository)
     {
@@ -26,7 +31,7 @@ public class ReportController : ControllerBase
         _weightRepository = weightRepository;
         _userRepository = userRepository;
     }
-     
+
     [HttpGet]
     public async Task<WeightReport> Get()
     {
@@ -40,3 +45,4 @@ public class ReportController : ControllerBase
         return report;
     }
 }
+*/
