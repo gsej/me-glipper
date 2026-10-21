@@ -1,0 +1,32 @@
+@if (error) {
+  <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    <p>{{ error }}</p>
+    <button
+      class="mt-2 bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded text-sm"
+      (click)="onRetry()"
+    >
+      Try Again
+    </button>
+  </div>
+}
+
+@if (!isLoading && !error) {
+  <div class="space-y-3 pb-3">
+    @for (level of levels; track level.medicationName) {
+      <div
+        class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-baseline justify-between"
+      >
+        <span class="font-medium text-gray-900">{{ level.medicationName }}</span>
+        <span class="text-gray-900">
+          <span class="text-lg font-semibold">{{ level.amountRemainingMg | number: "1.2-2" }}</span>
+          mg
+        </span>
+      </div>
+    }
+  </div>
+
+  <p class="text-xs text-gray-400 px-1">
+    Estimated amount currently in the body (instant-absorption model). Educational estimate,
+    not medical advice.
+  </p>
+}

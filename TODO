@@ -9,28 +9,51 @@ Done
 - Slice 1: "Add dose" data-entry page, end to end.
   - Backend: Weight domain renamed to Dose. Dose entity/record/requests/collection,
     DoseRepository (Doses table: DoseId, UserId, TakenAt, MedicationName, DoseAmountMg,
-    Deleted, Notes), DoseController (api/dose, api/doses). Backup updated. 43 tests green.
+    Deleted, Notes), DoseController (api/dose, api/doses). Backup updated. 42 tests green.
   - Frontend: DoseService + dose-input component (date, time, medication dropdown,
-    dose mg, notes) on page 1. History/report pages are placeholders.
+    dose mg, notes) on page 1.
+- Slice 2: Dose history page (page 2). dose-records component — stacked cards per dose
+  (date+time, medication, dose mg), delete-with-confirm, inline notes editing. Reuses
+  DoseService.loadDoses / updateNotes / deleteDose. Frontend only (endpoints already existed).
+
+Next: page 3 — "levels" page (keep the "report" name for now; TBD)
+-----------------------------------------------------------------
+Not a classic report. It should show, per medication:
+  (a) estimated amount of drug remaining in the body — NUMERIC first, CHART later.
+  (b) when the next dose is due.
+
+- Pharmacokinetics spec: me-glipper-private/drug-level-spec.md (one-compartment model,
+  first-order absorption + elimination, superposition of per-dose contributions; Instant
+  decay vs Bateman modes; ka derived from Tmax; presets for sema/tirz/reta). Reviewed —
+  model is sound; the full spec is somewhat gold-plated for step 1.
+- (a) current amount remaining is a pure, clock-free calculation (caller passes the time).
+  Next-dose-due (b) is a separate, simpler calc: per medication, last TakenAt + dosing
+  interval (weekly for now).
+- DECIDED: the calculator lives in the backend (pure C# class + endpoint). Lives under
+  code/dotnet/Api/Controllers/Levels/ (DrugLevelCalculator, DrugParameters, DoseInput,
+  DrugPresets), exposed via GET /api/levels (LevelsController).
+- STEP 1 DONE: estimated level shown numerically, SEMAGLUTIDE ONLY, instant-decay model.
+  Page 3 ("Estimated Levels") -> drug-levels component -> LevelsService -> GET /api/levels.
+  Calculator tests: 11 (53 total green). Verified end to end (1 mg now + 1 mg 7 days ago
+  => ~1.329 mg; non-sema doses ignored).
+- NEXT STEPS: add Bateman (first-order absorption) by swapping DrugLevelCalculator's
+  per-dose function (AmountFromSingleDose) + ka/Tmax solver; add tirzepatide + retatrutide
+  presets; then the chart (series = loop the per-dose calc over start/end/step); then
+  next-dose-due per medication.
 
 Parked (re-enable in later slices)
 ----------------------------------
 - Report feature: ReportController + ReportHandler are commented out (weight/BMI-specific,
   depended on the old Weight types). ReportHandlerTests + the report integration tests are
-  commented out too. Rebuild as a dose report slice.
+  commented out too. The new levels page replaces this slot — the old weight-report logic
+  will be deleted rather than revived.
 - Settings.AverageWeightWindowInDays is weight-report-specific; left in place, unused.
 
-Next slices (not started)
--------------------------
-- Dose history page (list of doses, edit notes, delete) — DoseService already has
-  loadDoses / updateNotes / deleteDose.
-- Dose report / "estimated levels" chart (pharmacokinetic projection per medication).
-- Medication list: currently hard-coded (Semaglutide, Tirzepatide, Retatrutide) and
-  dose unit fixed to mg — revisit if this needs to be configurable.
-
-Known gaps / cleanup
---------------------
-- CLAUDE.md still documents some endpoints/fields under their old weight names
-  (e.g. PUT /api/weight, the Comment field) — update to the dose names.
+Other
+-----
+- Medication list is hard-coded (Semaglutide, Tirzepatide, Retatrutide); dose unit fixed
+  to mg. Revisit if this needs to be configurable.
+- CLAUDE.md: endpoint/field names updated to the dose domain in the data-entry notes;
+  do a broader pass for any remaining weight-era references.
 - Private backups (me-glipper-private/backups) hold old weight data in the old schema;
   they won't restore into the new Doses table.
