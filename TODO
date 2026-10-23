@@ -39,10 +39,17 @@ Not a classic report. It should show, per medication:
   F 1.0) presets added; DrugPresets.All; LevelsController loops the presets and reports only
   medications the user has actually dosed (no zero rows); drug-levels has an empty state.
   60 tests green (calculator + preset + LevelsController integration tests).
+- STEP 3 DONE: charts. GET /api/levels/series returns a shared time grid (first dose -> now,
+  6h step + dose instants) with one aligned amounts array per dosed drug
+  (DrugLevelCalculator.AmountRemainingSeriesMg). New page 4 ("Charts") with one uPlot chart
+  per drug stacked vertically (drug-levels-charts + drug-level-chart), history-only with a
+  1M/All range selector (client-side filter, like me-tracker). uPlot added as a dependency.
+  63 tests green. NOTE: charts not yet eyeballed in a browser; landscape side-by-side layout
+  is a possible later tweak.
 - NEXT STEPS: add Bateman (first-order absorption) by swapping DrugLevelCalculator's
-  per-dose function (AmountFromSingleDose) + ka/Tmax solver; then the chart (series = loop
-  the per-dose calc over start/end/step); then
-  next-dose-due per medication.
+  per-dose function (AmountFromSingleDose) + ka/Tmax solver (the before/after the user wants
+  to see on the chart); then next-dose-due per medication; then rearrange what lives on which
+  page (page assignment is provisional).
 
 Parked (re-enable in later slices)
 ----------------------------------

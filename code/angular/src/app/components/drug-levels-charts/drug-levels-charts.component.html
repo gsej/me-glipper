@@ -1,0 +1,67 @@
+@if (error) {
+  <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    <p>{{ error }}</p>
+    <button
+      class="mt-2 bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded text-sm"
+      (click)="onRetry()"
+    >
+      Try Again
+    </button>
+  </div>
+}
+
+@if (!error && isLoading) {
+  <div class="text-center py-4">
+    <p class="text-gray-500">Loading…</p>
+  </div>
+}
+
+@if (!error && !isLoading) {
+  @if (series.length === 0) {
+    <div class="text-center py-4">
+      <p class="text-gray-500">No doses recorded yet.</p>
+    </div>
+  } @else {
+    <div class="flex justify-center gap-2 mb-4">
+      <button
+        [class]="
+          rangeMonths === 1
+            ? 'px-3 py-1 text-sm rounded bg-blue-500 text-white'
+            : 'px-3 py-1 text-sm rounded bg-gray-200 text-gray-700'
+        "
+        (click)="setRange(1)"
+      >
+        1M
+      </button>
+      <button
+        [class]="
+          rangeMonths === null
+            ? 'px-3 py-1 text-sm rounded bg-blue-500 text-white'
+            : 'px-3 py-1 text-sm rounded bg-gray-200 text-gray-700'
+        "
+        (click)="setRange(null)"
+      >
+        All
+      </button>
+    </div>
+
+    @for (s of series; track s.medicationName) {
+      <div class="mb-6">
+        <h3 class="text-sm font-semibold text-gray-700 mb-1">{{ s.medicationName }}</h3>
+        <div class="h-56">
+          <app-drug-level-chart
+            [times]="times"
+            [amountsMg]="s.amountsMg"
+            [color]="colorFor(s.medicationName)"
+            [rangeMonths]="rangeMonths"
+          ></app-drug-level-chart>
+        </div>
+      </div>
+    }
+
+    <p class="text-xs text-gray-400 px-1 pb-2">
+      Estimated amount in the body over time (instant-absorption model). Educational estimate,
+      not medical advice.
+    </p>
+  }
+}

@@ -64,6 +64,21 @@ public class DrugLevelCalculatorTests
         DrugLevelCalculator.AmountRemainingMg(Array.Empty<DoseInput>(), Start, Drug(24)).Should().Be(0);
     }
 
+    [Fact]
+    public void Series_EvaluatesTheAmountAtEachTime()
+    {
+        var drug = Drug(halfLifeHours: 24);
+        var doses = new[] { new DoseInput(Start, 1.0) };
+        var times = new[] { Start, Start.AddHours(24), Start.AddHours(48) };
+
+        var series = DrugLevelCalculator.AmountRemainingSeriesMg(doses, times, drug);
+
+        series.Should().HaveCount(3);
+        series[0].Should().BeApproximately(1.0, 1e-9);
+        series[1].Should().BeApproximately(0.5, 1e-9);
+        series[2].Should().BeApproximately(0.25, 1e-9);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]

@@ -16,6 +16,7 @@ import { ApiKeyInputComponent } from './components/api-key-input/api-key-input.c
 import { Page1Component } from './components/page-1/page-1.component';
 import { Page2Component } from './components/page-2/page-2.component';
 import { Page3Component } from './components/page-3/page-3.component';
+import { Page4Component } from './components/page-4/page-4.component';
 
 @Component({
   selector: 'app-root',
@@ -24,6 +25,7 @@ import { Page3Component } from './components/page-3/page-3.component';
     Page1Component,
     Page2Component,
     Page3Component,
+    Page4Component,
     PiComponent,
     ApiKeyInputComponent,
   ],
@@ -41,12 +43,12 @@ export class AppComponent implements AfterViewInit {
   }
 
   currentPage: number = 0;
-  totalPages: number = 3;
+  totalPages: number = 4;
   startX: number = 0;
 
   isInitialLoad: boolean = true;
 
-  pageNames: string[] = ['input', 'history', 'report'];
+  pageNames: string[] = ['input', 'history', 'report', 'charts'];
 
   @ViewChild('pagesContainer') pagesContainer!: ElementRef;
 

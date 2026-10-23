@@ -42,6 +42,15 @@ public static class DrugLevelCalculator
     }
 
     /// <summary>
+    /// Evaluates <see cref="AmountRemainingMg"/> at each of <paramref name="times"/>, producing a
+    /// series for charting. The spec anticipated this: generating a series is just looping the
+    /// per-dose calc over a time grid, so no restructuring is needed.
+    /// </summary>
+    public static IReadOnlyList<double> AmountRemainingSeriesMg(
+        IReadOnlyList<DoseInput> doses, IEnumerable<DateTime> times, DrugParameters drug)
+        => times.Select(at => AmountRemainingMg(doses, at, drug)).ToList();
+
+    /// <summary>
     /// Amount remaining from a single dose, <paramref name="elapsedHours"/> after it was given.
     /// Instant absorption + first-order elimination: A = F·D·e^(−k·t). Isolated so a different
     /// absorption model (e.g. the Bateman function) can replace just this method later.

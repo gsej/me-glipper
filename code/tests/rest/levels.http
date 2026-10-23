@@ -4,3 +4,7 @@
 ### Get estimated drug levels currently in the body (semaglutide, tirzepatide, retatrutide)
 GET {{baseUrl}}/levels
 X-Api-Key: apikey
+
+### Get the level time series for charting (shared time axis + one array per dosed drug)
+GET {{baseUrl}}/levels/series
+X-Api-Key: apikey

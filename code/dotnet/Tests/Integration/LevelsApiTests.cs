@@ -60,4 +60,35 @@ public class LevelsApiTests : IDisposable
 
         bobLevels!.Levels.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task Series_WithNoDoses_ReturnsEmpty()
+    {
+        var client = _factory.CreateClientWithKey(ApiTestFactory.AliceKey);
+
+        var series = await client.GetFromJsonAsync<LevelSeriesResponse>("/api/levels/series");
+
+        series!.Times.Should().BeEmpty();
+        series.Series.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Series_ReturnsAlignedSeriesForDosedMedications()
+    {
+        var client = _factory.CreateClientWithKey(ApiTestFactory.AliceKey);
+        await client.PostAsJsonAsync("/api/dose",
+            new CreateDoseRequest(DateTime.UtcNow.AddDays(-7), "Semaglutide", 1.0m));
+        await client.PostAsJsonAsync("/api/dose",
+            new CreateDoseRequest(DateTime.UtcNow, "Semaglutide", 1.0m));
+        await client.PostAsJsonAsync("/api/dose",
+            new CreateDoseRequest(DateTime.UtcNow, "Tirzepatide", 5.0m));
+
+        var series = await client.GetFromJsonAsync<LevelSeriesResponse>("/api/levels/series");
+
+        series!.Times.Should().NotBeEmpty();
+        series.Series.Select(s => s.MedicationName)
+            .Should().BeEquivalentTo(new[] { "Semaglutide", "Tirzepatide" });
+        // Every series aligns element-for-element with the shared time axis.
+        series.Series.Should().OnlyContain(s => s.AmountsMg.Count == series.Times.Count);
+    }
 }

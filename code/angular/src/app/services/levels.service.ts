@@ -12,6 +12,17 @@ export interface LevelsResponse {
   levels: DrugLevel[];
 }
 
+export interface DrugLevelSeries {
+  medicationName: string;
+  amountsMg: number[];
+}
+
+export interface LevelSeriesResponse {
+  // Shared x-axis (ISO timestamps); each series' amountsMg aligns to it element-for-element.
+  times: string[];
+  series: DrugLevelSeries[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -27,5 +38,9 @@ export class LevelsService {
 
   getLevels(): Observable<LevelsResponse> {
     return this.http.get<LevelsResponse>(`${this.apiUrl}/api/levels`);
+  }
+
+  getSeries(): Observable<LevelSeriesResponse> {
+    return this.http.get<LevelSeriesResponse>(`${this.apiUrl}/api/levels/series`);
   }
 }
