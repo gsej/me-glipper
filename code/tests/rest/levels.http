@@ -1,6 +1,6 @@
 
 @baseUrl = http://localhost:5200/api
 
-### Get estimated drug levels currently in the body (step 1: semaglutide only)
+### Get estimated drug levels currently in the body (semaglutide, tirzepatide, retatrutide)
 GET {{baseUrl}}/levels
 X-Api-Key: apikey

@@ -26,15 +26,24 @@ public class LevelsController : ControllerBase
         var entities = await _doseRepository.GetAllAsync(userId);
         var now = DateTime.UtcNow;
 
-        // Step 1: semaglutide only, instant-decay model. The other drugs (and the Bateman
-        // absorption model) follow in later steps; this will then loop over the presets.
-        var drug = DrugPresets.Semaglutide;
-        var doses = entities
-            .Where(e => string.Equals(e.MedicationName, drug.Name, StringComparison.OrdinalIgnoreCase))
-            .Select(e => new DoseInput(e.TakenAt, (double)e.DoseAmountMg));
+        // Instant-decay model for each known drug. Only report a drug the user has actually
+        // dosed (no zero rows for untaken medications). The Bateman absorption model will
+        // later swap in behind DrugLevelCalculator without changing this loop.
+        var levels = new List<DrugLevel>();
+        foreach (var drug in DrugPresets.All)
+        {
+            var doses = entities
+                .Where(e => string.Equals(e.MedicationName, drug.Name, StringComparison.OrdinalIgnoreCase))
+                .Select(e => new DoseInput(e.TakenAt, (double)e.DoseAmountMg))
+                .ToList();
 
-        var amount = DrugLevelCalculator.AmountRemainingMg(doses, now, drug);
+            if (doses.Count == 0)
+                continue;
 
-        return new LevelsResponse(new[] { new DrugLevel(drug.Name, amount) });
+            var amount = DrugLevelCalculator.AmountRemainingMg(doses, now, drug);
+            levels.Add(new DrugLevel(drug.Name, amount));
+        }
+
+        return new LevelsResponse(levels);
     }
 }

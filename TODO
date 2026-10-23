@@ -32,13 +32,16 @@ Not a classic report. It should show, per medication:
 - DECIDED: the calculator lives in the backend (pure C# class + endpoint). Lives under
   code/dotnet/Api/Controllers/Levels/ (DrugLevelCalculator, DrugParameters, DoseInput,
   DrugPresets), exposed via GET /api/levels (LevelsController).
-- STEP 1 DONE: estimated level shown numerically, SEMAGLUTIDE ONLY, instant-decay model.
+- STEP 1 DONE: estimated level shown numerically, instant-decay model.
   Page 3 ("Estimated Levels") -> drug-levels component -> LevelsService -> GET /api/levels.
-  Calculator tests: 11 (53 total green). Verified end to end (1 mg now + 1 mg 7 days ago
-  => ~1.329 mg; non-sema doses ignored).
+  Verified end to end (1 mg now + 1 mg 7 days ago => ~1.329 mg).
+- STEP 2 DONE: all three drugs. Tirzepatide (t½ 117 h, F 0.80) + retatrutide (t½ 144 h,
+  F 1.0) presets added; DrugPresets.All; LevelsController loops the presets and reports only
+  medications the user has actually dosed (no zero rows); drug-levels has an empty state.
+  60 tests green (calculator + preset + LevelsController integration tests).
 - NEXT STEPS: add Bateman (first-order absorption) by swapping DrugLevelCalculator's
-  per-dose function (AmountFromSingleDose) + ka/Tmax solver; add tirzepatide + retatrutide
-  presets; then the chart (series = loop the per-dose calc over start/end/step); then
+  per-dose function (AmountFromSingleDose) + ka/Tmax solver; then the chart (series = loop
+  the per-dose calc over start/end/step); then
   next-dose-due per medication.
 
 Parked (re-enable in later slices)
