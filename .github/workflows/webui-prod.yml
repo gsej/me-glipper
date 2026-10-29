@@ -10,7 +10,7 @@ jobs:
     env:
       WORKING_DIR: code/angular
       BUILD_OUTPUT_DIR: dist/me-glipper/browser      
-      API_URL: https://frigate.tailbdb963.ts.net
+      API_URL: https://me-glipper-m900.tailbdb963.ts.net
     
     steps: 
       - name: checkout repo
