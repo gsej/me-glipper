@@ -1,0 +1,4 @@
+# Install with: ansible-galaxy collection install -r requirements.yml
+# (Arch's `ansible` package already bundles community.docker.)
+collections:
+  - name: community.docker

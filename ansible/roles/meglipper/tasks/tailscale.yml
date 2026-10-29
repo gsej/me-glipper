@@ -1,0 +1,111 @@
+---
+# Install Tailscale in the LXC and expose the API over HTTPS with Funnel.
+#
+# The container is UNPRIVILEGED (no /dev/net/tun), so tailscaled runs in
+# userspace-networking mode — Funnel only needs to proxy a local TCP port, which
+# that mode supports without any device passthrough. See infra/main.tf.
+#
+# Prerequisites (one-time, Tailscale admin console — see ansible/README.md):
+#   - policy: tagOwners + a nodeAttrs `funnel` grant for tag:meglipper
+#   - HTTPS enabled (DNS settings)
+#   - an OAuth client (auth_keys: write, tagged tag:meglipper); its secret lives
+#     in ansible/secrets/tailscale-oauth.env as TS_OAUTH_SECRET=...
+
+# --- Install (official apt repo, keyring pattern mirrors the Docker tasks) ---
+
+- name: Add the Tailscale apt signing key
+  ansible.builtin.get_url:
+    url: "https://pkgs.tailscale.com/stable/ubuntu/{{ ansible_distribution_release }}.noarmor.gpg"
+    dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+    mode: "0644"
+
+- name: Add the Tailscale apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg]
+      https://pkgs.tailscale.com/stable/ubuntu {{ ansible_distribution_release }} main
+    filename: tailscale
+    state: present
+
+- name: Install Tailscale
+  ansible.builtin.apt:
+    name: tailscale
+    state: present
+    update_cache: true
+
+# --- Userspace networking (no TUN device in an unprivileged LXC) -------------
+
+- name: Run tailscaled in userspace-networking mode
+  ansible.builtin.lineinfile:
+    path: /etc/default/tailscaled
+    regexp: '^FLAGS='
+    line: 'FLAGS="--tun=userspace-networking"'
+  notify: Restart tailscaled
+
+- name: Ensure tailscaled is running and enabled
+  ansible.builtin.service:
+    name: tailscaled
+    state: started
+    enabled: true
+
+# Apply the userspace flag before we try to bring the node up.
+- name: Apply any pending tailscaled restart
+  ansible.builtin.meta: flush_handlers
+
+# --- Authenticate + expose ---------------------------------------------------
+
+- name: Deliver the Tailscale OAuth secret
+  ansible.builtin.copy:
+    src: "{{ meglipper_ts_oauth_src }}"
+    dest: "{{ meglipper_data_dir }}/tailscale-oauth.env"
+    mode: "0600"
+
+- name: Read the Tailscale backend state
+  ansible.builtin.command:
+    cmd: tailscale status --json
+  register: meglipper_ts_status
+  changed_when: false
+  failed_when: false
+
+- name: Bring the node up and advertise its tag (first run only)
+  # Sources the OAuth secret from the delivered env file; the secret is used as
+  # an auth key, which Tailscale mints behind the scenes for an OAuth client.
+  ansible.builtin.shell:
+    cmd: |
+      set -a
+      . {{ meglipper_data_dir }}/tailscale-oauth.env
+      set +a
+      tailscale up \
+        --auth-key="${TS_OAUTH_SECRET}?preauthorized=true&ephemeral=false" \
+        --advertise-tags={{ meglipper_ts_tags }} \
+        --hostname={{ meglipper_ts_hostname }}
+  when: (meglipper_ts_status.stdout | from_json).BackendState | default('') != 'Running'
+  no_log: true
+  changed_when: true
+
+- name: Check the current Funnel configuration
+  ansible.builtin.command:
+    cmd: tailscale funnel status
+  register: meglipper_funnel_status
+  changed_when: false
+  failed_when: false
+
+- name: Expose port 5200 over Funnel (public HTTPS 443)
+  # Funnel only permits external 443/8443/10000; 443 → localhost:5200.
+  ansible.builtin.command:
+    cmd: tailscale funnel --bg 5200
+  when: "'5200' not in meglipper_funnel_status.stdout"
+  changed_when: true
+
+- name: Confirm Funnel is serving the API
+  ansible.builtin.command:
+    cmd: tailscale funnel status
+  register: meglipper_funnel_check
+  changed_when: false
+  failed_when: "'5200' not in meglipper_funnel_check.stdout"
+
+- name: Report the public Funnel URL
+  # `tailscale funnel status` prints the live https://<host>.<tailnet>.ts.net URL
+  # plus the 127.0.0.1:5200 proxy mapping.
+  ansible.builtin.debug:
+    var: meglipper_funnel_check.stdout_lines

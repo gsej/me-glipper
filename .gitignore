@@ -9,8 +9,21 @@ nohup.out
 *.csv
 *.csv#
 
-# Local SQLite runtime files (e.g. code/dotnet/Api/me-tracker.db)
+# Local SQLite runtime files (e.g. code/dotnet/Api/me-glipper.db)
 *.db
 *.db-wal
 *.db-shm
+
+# Terraform (infra/)
+infra/.terraform/
+# safety net: an accidental auto-loaded var file (real ones are <env>-terraform.tfvars)
+infra/terraform.tfvars
+# per-environment secret var files — keep these in your password manager
+infra/*-secrets.tfvars
+# per-workspace state (one dir per environment)
+infra/terraform.tfstate.d/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
 

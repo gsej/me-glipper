@@ -1,0 +1,7 @@
+---
+# We connect as root, so no privilege escalation (become) is needed.
+- name: Deploy me-glipper API
+  hosts: meglipper
+  gather_facts: true
+  roles:
+    - meglipper
