@@ -1,0 +1,140 @@
+---
+# --- Pre-flight: deploy secrets must exist on the control machine -----------
+# Both files are gitignored; a missing one would otherwise fail later with a
+# cryptic "copy: could not find src". Check up front with a clear message.
+- name: Check the deploy secret files exist (control machine)
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - "{{ meglipper_env_src }}"
+    - "{{ meglipper_ts_oauth_src }}"
+  delegate_to: localhost
+  register: meglipper_secret_stat
+
+- name: Fail with guidance if a secret file is missing
+  ansible.builtin.assert:
+    that: item.stat.exists
+    fail_msg: >-
+      Missing secret file: {{ item.item }}. Copy the matching sample in
+      ansible/secrets/ (e.g. env.sample -> .env) and fill in the real values
+      from your password manager.
+    quiet: true
+  loop: "{{ meglipper_secret_stat.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+
+# --- Docker install (official apt repo) -------------------------------------
+
+- name: Install prerequisite packages
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - git
+    state: present
+    update_cache: true
+
+- name: Create apt keyring directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Add Docker GPG key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+
+# NOTE: ansible.builtin.apt_repository is deprecated (slated for removal in
+# ansible-core 2.25) in favour of deb822_repository. Fine for now.
+- name: Add Docker apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    filename: docker
+    state: present
+
+- name: Install Docker Engine and the Compose plugin
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+      - docker-buildx-plugin
+    state: present
+    update_cache: true
+
+- name: Ensure Docker is running and enabled
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+# --- Code ------------------------------------------------------------------
+
+- name: Clone/update the me-glipper repo (build source)
+  ansible.builtin.git:
+    repo: "{{ meglipper_repo }}"
+    dest: "{{ meglipper_dir }}"
+    version: "{{ meglipper_version }}"
+    # Never clobber local build artefacts; just fast-forward the source.
+    force: false
+
+- name: Read the checked-out git short hash
+  ansible.builtin.command:
+    cmd: git rev-parse --short HEAD
+    chdir: "{{ meglipper_dir }}"
+  register: meglipper_git_hash
+  changed_when: false
+
+# --- Data + secret ----------------------------------------------------------
+
+- name: Ensure the data directory exists
+  # The database/ subdir is a Terraform mount point; this is its parent.
+  ansible.builtin.file:
+    path: "{{ meglipper_data_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Deliver the API keys (.env)
+  ansible.builtin.copy:
+    src: "{{ meglipper_env_src }}"
+    dest: "{{ meglipper_data_dir }}/.env"
+    mode: "0600"
+
+# --- Deploy -----------------------------------------------------------------
+
+- name: Write GIT_HASH for compose interpolation
+  # Separate from the service .env above — this only feeds ${GIT_HASH} into the
+  # compose build arg, via --env-file (env_files below).
+  ansible.builtin.copy:
+    content: "GIT_HASH={{ meglipper_git_hash.stdout }}\n"
+    dest: "{{ meglipper_dir }}/compose.env"
+    mode: "0644"
+
+- name: Build and start the API
+  community.docker.docker_compose_v2:
+    project_src: "{{ meglipper_dir }}"
+    files:
+      - "{{ meglipper_compose_file }}"
+    env_files:
+      - "{{ meglipper_dir }}/compose.env"
+    build: always
+    state: present
+
+- name: Wait for the API health endpoint
+  ansible.builtin.uri:
+    url: "http://localhost:5200/api/healthz"
+    status_code: 200
+  register: meglipper_health
+  retries: 10
+  delay: 3
+  until: meglipper_health.status == 200
+
+# --- Public exposure (Tailscale Funnel) -------------------------------------
+# Kept in its own file so the whole block is copyable to the Frigate repo.
+- name: Expose the API over the internet via Tailscale Funnel
+  ansible.builtin.import_tasks: tailscale.yml

@@ -1,0 +1,27 @@
+---
+# Public repo cloned onto the box to build from (https = no auth needed).
+meglipper_repo: https://github.com/gsej/me-glipper.git
+meglipper_version: master
+
+# Code (git clone / build source) vs data (DB + .env) — kept separate.
+meglipper_dir: /opt/me-glipper
+meglipper_data_dir: /opt/me-glipper-data
+
+# The standalone deployment compose (committed in the repo).
+meglipper_compose_file: docker-compose.yml
+
+# Source of the secret .env on the CONTROL machine: ansible/secrets/.env
+# (gitignored — copy env.sample there and fill it in). The DB is NOT copied —
+# the app creates an empty one, real data is restored out-of-band.
+meglipper_env_src: "{{ playbook_dir }}/secrets/.env"
+
+# --- Tailscale (phase 2: public exposure via Funnel) ------------------------
+# OAuth client secret (auth_keys scope, tagged tag:meglipper) on the CONTROL
+# machine: ansible/secrets/tailscale-oauth.env (gitignored), same pattern as the
+# .env above.
+meglipper_ts_oauth_src: "{{ playbook_dir }}/secrets/tailscale-oauth.env"
+# MagicDNS hostname for the node. The public URL becomes
+# https://{{ meglipper_ts_hostname }}.<tailnet>.ts.net
+meglipper_ts_hostname: me-glipper
+# ACL tag the node advertises — must match the OAuth client's tag.
+meglipper_ts_tags: tag:meglipper

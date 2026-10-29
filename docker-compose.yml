@@ -1,3 +1,11 @@
+# Deployment compose for the Proxmox LXC.
+#
+# Uses absolute paths to the data/secret location that Ansible provisions on the
+# box (/opt/me-glipper-data). For local dev run the API directly with
+# `dotnet run --project code/dotnet/Api` instead of this compose.
+#
+# Run (Ansible does this): docker compose up -d --build
+# GIT_HASH is supplied for interpolation via an --env-file (see the Ansible role).
 services:
   api:
     build:
@@ -8,10 +16,14 @@ services:
     ports:
       - "5200:8080"
     env_file:
-      - ../me-glipper-private/.env
+      # API keys — delivered by Ansible, on the container rootfs (not the mount).
+      - /opt/me-glipper-data/.env
     environment:
       - ASPNETCORE_URLS=http://+:8080
       - SqliteConnectionString=Data Source=/app/database/me-glipper.db
     volumes:
-      - ../me-glipper-private/database:/app/database
+      # Dedicated persistent mount (Terraform). The DB lives here and survives
+      # container rebuilds; seeded empty by the app, real data restored via the
+      # API restore endpoint out-of-band.
+      - /opt/me-glipper-data/database:/app/database
     restart: always

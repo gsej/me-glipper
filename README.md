@@ -26,24 +26,27 @@ The workflow builds the Angular app and deploys the static files to **GitHub Pag
 
 ### Backend
 
-Deployed on the home server:
+Deployed to a **Proxmox** LXC as Infrastructure-as-Code:
 
-```bash
-git pull
-./start.sh
-```
+- **`infra/`** — Terraform builds an unprivileged Ubuntu 24.04 LXC on the Proxmox
+  host (M900), with a dedicated persistent volume for the SQLite DB. See
+  `infra/README.md`.
+- **`ansible/`** — Ansible installs Docker, clones this repo, builds/starts the
+  API from `docker-compose.yml`, and exposes it over public HTTPS via Tailscale
+  Funnel at `https://me-glipper-m900.<tailnet>.ts.net`. See `ansible/README.md`.
 
-- **`start.sh`** — builds the image and starts the container. Use for a cold start.
-- **`restart.sh`** — stops the running container, then rebuilds and restarts it.
-
-`docker-compose.yml` builds the image from `code/dotnet/Api/Dockerfile` and starts the container on port 5200, with the database volume and secrets mounted from the private directory.
+`docker-compose.yml` builds the image from `code/dotnet/Api/Dockerfile` and runs
+it on port 5200, mounting the DB volume and `.env` from `/opt/me-glipper-data`
+(provisioned by Terraform/Ansible). Because it uses those absolute paths, it is a
+**deployment** compose — for local dev run the API directly with
+`dotnet run --project code/dotnet/Api` instead.
 
 #### Verifying the running build
 
 The health endpoint returns the git hash the image was built from:
 
 ```bash
-curl https://<server>/api/healthz
+curl https://me-glipper-m900.<tailnet>.ts.net/api/healthz
 # {"status":"Healthy","gitHash":"abc1234"}
 ```
 
