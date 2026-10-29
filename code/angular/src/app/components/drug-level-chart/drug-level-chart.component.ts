@@ -27,8 +27,8 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
   @Input() times: string[] = [];
   @Input() amountsMg: number[] = [];
   @Input() color = '#3b82f6';
-  /** Months of history to show (from the latest point), or `null` for all data. */
-  @Input() rangeMonths: number | null = 1;
+  /** Days of history to show (from the latest point), or `null` for all data. */
+  @Input() rangeDays: number | null = 30;
 
   @ViewChild('chartContainer') private chartContainer?: ElementRef<HTMLDivElement>;
 
@@ -65,11 +65,8 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
     let xs = this.times.map((t) => Math.floor(new Date(t).getTime() / 1000));
     let ys = this.amountsMg;
 
-    if (this.rangeMonths != null && xs.length > 0) {
-      const latest = new Date(xs[xs.length - 1] * 1000);
-      const cutoff = new Date(latest);
-      cutoff.setMonth(cutoff.getMonth() - this.rangeMonths);
-      const cutoffSecs = Math.floor(cutoff.getTime() / 1000);
+    if (this.rangeDays != null && xs.length > 0) {
+      const cutoffSecs = xs[xs.length - 1] - this.rangeDays * 24 * 60 * 60;
       const from = xs.findIndex((x) => x >= cutoffSecs);
       if (from > 0) {
         xs = xs.slice(from);

@@ -22,27 +22,19 @@
       <p class="text-gray-500">No doses recorded yet.</p>
     </div>
   } @else {
-    <div class="flex justify-center gap-2 mb-4">
-      <button
-        [class]="
-          rangeMonths === 1
-            ? 'px-3 py-1 text-sm rounded bg-blue-500 text-white'
-            : 'px-3 py-1 text-sm rounded bg-gray-200 text-gray-700'
-        "
-        (click)="setRange(1)"
-      >
-        1M
-      </button>
-      <button
-        [class]="
-          rangeMonths === null
-            ? 'px-3 py-1 text-sm rounded bg-blue-500 text-white'
-            : 'px-3 py-1 text-sm rounded bg-gray-200 text-gray-700'
-        "
-        (click)="setRange(null)"
-      >
-        All
-      </button>
+    <div class="flex justify-center flex-wrap gap-2 mb-4">
+      @for (option of rangeOptions; track option.label) {
+        <button
+          [class]="
+            rangeDays === option.days
+              ? 'px-3 py-1 text-sm rounded bg-blue-500 text-white'
+              : 'px-3 py-1 text-sm rounded bg-gray-200 text-gray-700'
+          "
+          (click)="setRange(option.days)"
+        >
+          {{ option.label }}
+        </button>
+      }
     </div>
 
     @for (s of series; track s.medicationName) {
@@ -53,7 +45,7 @@
             [times]="times"
             [amountsMg]="s.amountsMg"
             [color]="colorFor(s.medicationName)"
-            [rangeMonths]="rangeMonths"
+            [rangeDays]="rangeDays"
           ></app-drug-level-chart>
         </div>
       </div>

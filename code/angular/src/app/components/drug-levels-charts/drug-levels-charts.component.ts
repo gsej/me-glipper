@@ -17,7 +17,16 @@ export class DrugLevelsChartsComponent implements OnInit {
   series: DrugLevelSeries[] = [];
   isLoading = false;
   error: string | null = null;
-  rangeMonths: number | null = 1;
+  rangeDays: number | null = 30;
+
+  // Window options in ascending order; 1M/3M approximate 30/90 days.
+  readonly rangeOptions: { label: string; days: number | null }[] = [
+    { label: '15D', days: 15 },
+    { label: '1M', days: 30 },
+    { label: '45D', days: 45 },
+    { label: '3M', days: 90 },
+    { label: 'All', days: null },
+  ];
 
   private readonly colors: Record<string, string> = {
     Semaglutide: '#3b82f6', // blue-500
@@ -49,8 +58,8 @@ export class DrugLevelsChartsComponent implements OnInit {
     });
   }
 
-  setRange(months: number | null): void {
-    this.rangeMonths = months;
+  setRange(days: number | null): void {
+    this.rangeDays = days;
   }
 
   onRetry(): void {
