@@ -19,13 +19,13 @@ data_size_gb         = 1
 
 # LXC OS hostname. Set to a box-specific name (default is "me-glipper") so it
 # aligns with the Tailscale node name set in the Ansible inventory
-# (meglipper_ts_hostname=me-glipper-m900), matching the me-tracker-m900 naming
-# convention. The canonical "me-glipper" name is left unclaimed for now.
+# (meglipper_ts_hostname=me-glipper-m900), using the `-m900` per-host naming
+# convention.
 hostname = "me-glipper-m900"
 
 # --- Networking (static so the Ansible inventory points at a known address) ---
-# .222 is the M900 me-glipper LXC in the .220–.229 Proxmox/IaC block (see the
-# ubiqiti-network repo's ip-allocation.md); .220 is Frigate, .221 is me-tracker.
+# .222 is the M900 me-glipper LXC in the .220–.229 Proxmox/IaC block; see the
+# ubiqiti-network repo's ip-allocation.md for the full allocation.
 container_ip_cidr = "192.168.1.222/24"
 container_gateway = "192.168.1.1"
 dns_servers       = ["192.168.1.1"]

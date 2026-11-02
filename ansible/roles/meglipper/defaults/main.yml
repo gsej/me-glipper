@@ -20,8 +20,7 @@ meglipper_env_src: "{{ playbook_dir }}/secrets/.env"
 # machine: ansible/secrets/tailscale-oauth.env (gitignored), same pattern as the
 # .env above.
 meglipper_ts_oauth_src: "{{ playbook_dir }}/secrets/tailscale-oauth.env"
-# MagicDNS hostname for the node. The public URL becomes
-# https://{{ meglipper_ts_hostname }}.<tailnet>.ts.net
-meglipper_ts_hostname: me-glipper
+# MagicDNS hostname for the node, set per-host in the inventory (no default
+# here). The public URL becomes https://{{ meglipper_ts_hostname }}.<tailnet>.ts.net
 # ACL tag the node advertises — must match the OAuth client's tag.
 meglipper_ts_tags: tag:meglipper
