@@ -78,8 +78,7 @@ resource "proxmox_virtual_environment_container" "meglipper" {
     }
 
     user_account {
-      keys     = [trimspace(file(pathexpand(var.ssh_public_key_path)))]
-      password = var.container_root_password
+      keys = [trimspace(file(pathexpand(var.ssh_public_key_path)))]
     }
   }
 
@@ -91,4 +90,11 @@ resource "proxmox_virtual_environment_container" "meglipper" {
   started       = true
 
   tags = ["me-glipper", "terraform"]
+
+  # Root has no usable password: use the deploy key, or `pct enter` from the host.
+  # Terraform must not act on the old password still recorded in state, because
+  # changing the user account can force the container to be rebuilt.
+  lifecycle {
+    ignore_changes = [initialization[0].user_account]
+  }
 }

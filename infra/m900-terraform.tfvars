@@ -1,7 +1,6 @@
 # M900 (ThinkCentre) environment — NON-SECRET config. Committed.
-# The container root password lives in m900-secrets.tfvars (gitignored, in your
-# password manager) and the Proxmox password in ~/.config/homelab/secrets.env.
-# Use the wrapper, ./apply-m900.sh, which loads both and selects the `m900` workspace.
+# The Proxmox password is in ~/.config/homelab/secrets.env. Use the wrapper,
+# ./apply-m900.sh, which loads it and selects the `m900` workspace.
 
 # --- Proxmox connection ---
 proxmox_endpoint = "https://192.168.1.69:8006/"
