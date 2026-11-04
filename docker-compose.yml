@@ -23,7 +23,7 @@ services:
       - SqliteConnectionString=Data Source=/app/database/me-glipper.db
     volumes:
       # Dedicated persistent mount (Terraform). The DB lives here and survives
-      # container rebuilds; seeded empty by the app, real data restored via the
+      # Docker container rebuilds (not destroying the LXC); seeded empty by the app, real data restored via the
       # API restore endpoint out-of-band.
       - /opt/me-glipper-data/database:/app/database
     restart: always

@@ -50,8 +50,9 @@ resource "proxmox_virtual_environment_container" "meglipper" {
     size         = var.rootfs_size_gb
   }
 
-  # Dedicated volume for the SQLite DB so a container rebuild never eats the
-  # data. Mounted at the DB dir; .env sits in the parent dir on the rootfs.
+  # Dedicated volume for the SQLite DB, mounted at the DB dir; .env sits in the
+  # parent dir on the rootfs. Destroying or replacing this container destroys the
+  # volume too, so back up the database first.
   mount_point {
     volume = var.storage_datastore_id
     size   = "${var.data_size_gb}G"
@@ -95,6 +96,11 @@ resource "proxmox_virtual_environment_container" "meglipper" {
   # Terraform must not act on the old password still recorded in state, because
   # changing the user account can force the container to be rebuilt.
   lifecycle {
-    ignore_changes = [initialization[0].user_account]
+    ignore_changes = [
+      initialization[0].user_account,
+      # The template only matters at creation. Without this, another repo removing
+      # the shared template file makes Terraform plan to replace this container.
+      operating_system[0].template_file_id,
+    ]
   }
 }

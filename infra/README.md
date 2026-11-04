@@ -16,7 +16,8 @@ Terraform workspaces (see below).
   (`overwrite_unmanaged` adopts a copy another repo already fetched), so this
   repo doesn't depend on another one having run first.
 - **Dedicated data mount** — the SQLite DB lives on its own volume at
-  `/opt/me-glipper-data/database` so a container rebuild never destroys it.
+  `/opt/me-glipper-data/database`, separate from the root filesystem. Terraform owns this volume, so
+  destroying or replacing the LXC **destroys the database**: back it up first.
 
 ## Prerequisites
 
