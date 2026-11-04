@@ -22,7 +22,9 @@ Terraform workspaces (see below).
 
 1. A Proxmox node reachable over HTTPS. The Ubuntu template is downloaded by
    Terraform (adjust `template_url` if the pinned version 404s).
-2. The Proxmox `root@pam` password (in `<env>-secrets.tfvars` or `TF_VAR_proxmox_password`).
+2. The Proxmox `root@pam` password, exported as `TF_VAR_proxmox_password` in
+   `~/.config/homelab/secrets.env` (outside the repo, mode 600; master copy in your
+   password manager). The wrappers load it.
 3. A deploy SSH keypair at `../ansible/secrets/deploy_key{,.pub}`. The public key
    is committed and injected into the container; the private key is gitignored —
    restore it from your password manager (`chmod 600`), or generate a fresh pair:
@@ -39,8 +41,10 @@ never get committed:
 
 - `m900-terraform.tfvars` — **committed**, non-secret config (endpoint, node,
   networking, hostname, …).
-- `m900-secrets.tfvars` — **gitignored** (`infra/*-secrets.tfvars`): just the
-  passwords; keep them in your password manager. Copy `secrets.tfvars.example`.
+- `m900-secrets.tfvars` — **gitignored** (`infra/*-secrets.tfvars`): the container
+  root password; keep it in your password manager. Copy `secrets.tfvars.example`.
+  Don't add `proxmox_password` here: a value in a var file overrides the
+  environment variable.
 - Each environment uses its own **Terraform workspace**, so state is isolated
   under `terraform.tfstate.d/<env>/`. This box uses the `m900` workspace (the
   wrapper scripts select it automatically).

@@ -1,9 +1,7 @@
 # M900 (ThinkCentre) environment — NON-SECRET config. Committed.
-# Secrets (passwords) live in m900-secrets.tfvars (gitignored, in your password
-# manager). Neither file is auto-loaded, so pass both explicitly — or just use
-# the wrapper: ./apply-m900.sh  (which also selects the `m900` workspace).
-#
-#   terraform apply -var-file=m900-terraform.tfvars -var-file=m900-secrets.tfvars
+# The container root password lives in m900-secrets.tfvars (gitignored, in your
+# password manager) and the Proxmox password in ~/.config/homelab/secrets.env.
+# Use the wrapper, ./apply-m900.sh, which loads both and selects the `m900` workspace.
 
 # --- Proxmox connection ---
 proxmox_endpoint = "https://192.168.1.69:8006/"
@@ -25,7 +23,7 @@ hostname = "me-glipper-m900"
 
 # --- Networking (static so the Ansible inventory points at a known address) ---
 # .222 is the M900 me-glipper LXC in the .220–.229 Proxmox/IaC block; see the
-# ubiqiti-network repo's ip-allocation.md for the full allocation.
+# ubiquiti-network repo's ip-allocation.md for the full allocation.
 container_ip_cidr = "192.168.1.222/24"
 container_gateway = "192.168.1.1"
 dns_servers       = ["192.168.1.1"]
