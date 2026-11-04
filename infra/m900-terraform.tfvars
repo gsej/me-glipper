@@ -20,6 +20,8 @@ data_size_gb         = 1
 # convention.
 hostname = "me-glipper-m900"
 
+container_id = 102
+
 # --- Networking (static so the Ansible inventory points at a known address) ---
 # .222 is the M900 me-glipper LXC in the .220–.229 Proxmox/IaC block; see the
 # ubiquiti-network repo's ip-allocation.md for the full allocation.
