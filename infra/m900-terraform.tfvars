@@ -3,7 +3,7 @@
 # ./apply-m900.sh, which loads it and selects the `m900` workspace.
 
 # --- Proxmox connection ---
-proxmox_endpoint = "https://192.168.1.69:8006/"
+proxmox_endpoint = "https://192.168.1.220:8006/"
 proxmox_node     = "pvem900"
 
 # The Ubuntu template is downloaded by Terraform (see template_url /
