@@ -44,6 +44,7 @@
           <app-drug-level-chart
             [times]="times"
             [amountsMg]="s.amountsMg"
+            [comparisonAmountsMg]="s.instantAmountsMg"
             [color]="colorFor(s.medicationName)"
             [rangeDays]="rangeDays"
           ></app-drug-level-chart>
@@ -52,8 +53,9 @@
     }
 
     <p class="text-xs text-gray-400 px-1 pb-2">
-      Estimated amount in the body over time (instant-absorption model). Educational estimate,
-      not medical advice.
+      Estimated amount in the body over time. Solid line: with gradual absorption from the
+      injection site. Dashed grey line: instant-absorption model, for comparison. Educational
+      estimate, not medical advice.
     </p>
   }
 }

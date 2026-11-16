@@ -43,13 +43,21 @@ Not a classic report. It should show, per medication:
   6h step + dose instants) with one aligned amounts array per dosed drug
   (DrugLevelCalculator.AmountRemainingSeriesMg). New page 4 ("Charts") with one uPlot chart
   per drug stacked vertically (drug-levels-charts + drug-level-chart), history-only with a
-  1M/All range selector (client-side filter, like me-tracker). uPlot added as a dependency.
+  15D/1M/45D/3M/All range selector (client-side filter, like me-tracker). uPlot added as a dependency.
   63 tests green. NOTE: charts not yet eyeballed in a browser; landscape side-by-side layout
   is a possible later tweak.
-- NEXT STEPS: add Bateman (first-order absorption) by swapping DrugLevelCalculator's
-  per-dose function (AmountFromSingleDose) + ka/Tmax solver (the before/after the user wants
-  to see on the chart); then next-dose-due per medication; then rearrange what lives on which
-  page (page assignment is provisional).
+- STEP 4 DONE: first-order absorption (Bateman function). AbsorptionModel enum
+  (Instant/FirstOrder, FirstOrder default); DrugParameters gains TmaxHours (presets: sema 48 h,
+  tirz 24 h, reta 36 h — approximate placeholders); ka derived from Tmax by bisection
+  (AbsorptionRateFromTmax, ka > k root; Tmax must be < t½/ln 2); limiting form used when
+  ka ≈ k. GET /api/levels (page 3 numbers) now uses FirstOrder. 77 tests green.
+- TEMPORARY comparison line: GET /api/levels/series also returns InstantAmountsMg, drawn as a
+  dashed grey "Instant" line on each chart. REMOVE once the absorption curve has been checked
+  (LevelSeriesResponse.InstantAmountsMg, LevelsController, levels.service.ts instantAmountsMg,
+  drug-level-chart comparisonAmountsMg input, drug-levels-charts template + footnote,
+  LevelsApiTests series assertion).
+- NEXT STEPS: next-dose-due per medication; then rearrange what lives on which page (page
+  assignment is provisional).
 
 Parked (re-enable in later slices)
 ----------------------------------
@@ -67,3 +75,6 @@ Other
   do a broader pass for any remaining weight-era references.
 - Private backups (me-glipper-private/backups) hold old weight data in the old schema;
   they won't restore into the new Doses table.
+- Users table still has HeightInCm (weight-tracker leftover; the Shotsy converter fills it
+  with a dummy 170). Check why it's still there / whether anything uses it, and remove it
+  if not (entity, repository, backup/restore format, tests).

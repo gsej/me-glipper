@@ -14,7 +14,7 @@ import uPlot from 'uplot';
 /**
  * Renders one drug's estimated-level series as a uPlot line chart. Presentational: the
  * data (shared ISO times + aligned amounts) and the visible range come in via @Input;
- * fetching lives in the parent. Mirrors the me-tracker weight-chart lifecycle.
+ * fetching lives in the parent.
  */
 @Component({
   selector: 'app-drug-level-chart',
@@ -26,6 +26,11 @@ import uPlot from 'uplot';
 export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() times: string[] = [];
   @Input() amountsMg: number[] = [];
+  /**
+   * Optional second line (aligned to `times`), drawn thin, dashed and grey. TEMPORARY: used to
+   * compare the instant-decay model against the absorption model; remove once checked.
+   */
+  @Input() comparisonAmountsMg: number[] | null = null;
   @Input() color = '#3b82f6';
   /** Days of history to show (from the latest point), or `null` for all data. */
   @Input() rangeDays: number | null = 30;
@@ -57,13 +62,17 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
     this.renderChart();
   }
 
-  /** Build uPlot [x, y]: x = unix seconds (ascending), filtered to the selected range. */
+  /**
+   * Build uPlot [x, y] (or [x, y, comparison]): x = unix seconds (ascending), filtered to the
+   * selected range.
+   */
   private toChartData(): uPlot.AlignedData | undefined {
     if (this.times.length === 0) {
       return undefined;
     }
     let xs = this.times.map((t) => Math.floor(new Date(t).getTime() / 1000));
     let ys = this.amountsMg;
+    let cs = this.comparisonAmountsMg;
 
     if (this.rangeDays != null && xs.length > 0) {
       const cutoffSecs = xs[xs.length - 1] - this.rangeDays * 24 * 60 * 60;
@@ -71,10 +80,14 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
       if (from > 0) {
         xs = xs.slice(from);
         ys = ys.slice(from);
+        cs = cs?.slice(from) ?? null;
       }
     }
 
-    return xs.length > 0 ? [xs, ys] : undefined;
+    if (xs.length === 0) {
+      return undefined;
+    }
+    return cs ? [xs, ys, cs] : [xs, ys];
   }
 
   private renderChart(): void {
@@ -85,6 +98,11 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
       this.chart?.destroy();
       this.chart = undefined;
       return;
+    }
+    // uPlot fixes the series list at construction, so rebuild if the line count changes.
+    if (this.chart && this.chart.series.length !== this.data.length) {
+      this.chart.destroy();
+      this.chart = undefined;
     }
     if (this.chart) {
       this.chart.setData(this.data);
@@ -106,12 +124,23 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
             rawValue == null ? '--' : new Date(rawValue * 1000).toLocaleDateString(),
         },
         {
-          label: 'mg',
+          label: this.comparisonAmountsMg ? 'With absorption' : 'mg',
           stroke: this.color,
           fill: this.color + '22', // light translucent area under the line
           width: 2,
           points: { show: false },
         },
+        ...(this.comparisonAmountsMg
+          ? [
+              {
+                label: 'Instant',
+                stroke: '#9ca3af', // gray-400
+                width: 1,
+                dash: [4, 4],
+                points: { show: false },
+              },
+            ]
+          : []),
       ],
       axes: [{}, { label: 'mg' }],
     };

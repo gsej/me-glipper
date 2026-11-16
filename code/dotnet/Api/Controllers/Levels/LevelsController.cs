@@ -12,7 +12,7 @@ public class LevelsController : ControllerBase
 {
     // Sampling resolution for the chart series. 6 h is plenty for these multi-day half-lives
     // and keeps payloads modest even over a long history; dose instants are added on top so
-    // each dose's peak is captured exactly.
+    // each dose's start is captured exactly (the first-order peak comes later, at ~Tmax).
     private static readonly TimeSpan SeriesStep = TimeSpan.FromHours(6);
 
     private readonly DoseRepository _doseRepository;
@@ -31,7 +31,7 @@ public class LevelsController : ControllerBase
         var now = DateTime.UtcNow;
 
         var levels = dosed
-            .Select(x => new DrugLevel(x.Drug.Name, DrugLevelCalculator.AmountRemainingMg(x.Doses, now, x.Drug)))
+            .Select(x => new DrugLevel(x.Drug.Name, DrugLevelCalculator.AmountRemainingMg(x.Doses, now, x.Drug, AbsorptionModel.FirstOrder)))
             .ToList();
 
         return new LevelsResponse(levels);
@@ -50,9 +50,13 @@ public class LevelsController : ControllerBase
         var start = allDoseTimes.Min();
         var times = BuildTimeGrid(start, now, allDoseTimes);
 
+        // InstantAmountsMg is a TEMPORARY comparison line (instant-decay model) for checking the
+        // first-order absorption curve on the chart; remove it once that has been checked.
         var series = dosed
             .Select(x => new DrugLevelSeries(
-                x.Drug.Name, DrugLevelCalculator.AmountRemainingSeriesMg(x.Doses, times, x.Drug)))
+                x.Drug.Name,
+                DrugLevelCalculator.AmountRemainingSeriesMg(x.Doses, times, x.Drug, AbsorptionModel.FirstOrder),
+                DrugLevelCalculator.AmountRemainingSeriesMg(x.Doses, times, x.Drug, AbsorptionModel.Instant)))
             .ToList();
 
         return new LevelSeriesResponse(times, series);
@@ -78,7 +82,7 @@ public class LevelsController : ControllerBase
 
     /// <summary>
     /// A shared ascending x-axis from the first dose to now: a fixed-step grid plus the exact
-    /// dose instants (so peaks land on a sample) and <paramref name="now"/> as the final point.
+    /// dose instants (so each dose's start lands on a sample) and <paramref name="now"/> as the final point.
     /// </summary>
     private static IReadOnlyList<DateTime> BuildTimeGrid(DateTime start, DateTime now, IEnumerable<DateTime> doseTimes)
     {
