@@ -3,3 +3,13 @@
   width: 100%;
   height: 100%;
 }
+
+// uPlot builds its own DOM, so these rules need ::ng-deep to reach it. `visibility` (not
+// `display`) keeps the legend's space, so the chart doesn't jump as the cursor enters/leaves.
+:host ::ng-deep .uplot .u-legend {
+  visibility: hidden;
+}
+
+:host ::ng-deep .uplot.cursor-active .u-legend {
+  visibility: visible;
+}

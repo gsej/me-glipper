@@ -54,6 +54,13 @@ Not a classic report. It should show, per medication:
 - STEP 5 DONE: removed the temporary dashed grey "Instant" comparison line from the charts
   (InstantAmountsMg dropped from GET /api/levels/series and the frontend). The Instant model
   stays in DrugLevelCalculator (used by tests). Page 3 caption now says "with gradual absorption".
+- STEP 6 DONE: charts handle drugs that have cleared. "Effectively zero" = below 0.005 mg
+  (matches page 3's 0.00 display). Each chart's y-axis is fixed at 0..all-time peak (+5%), so a
+  near-zero tail is no longer stretched to fill the chart. Active drugs are listed first, then
+  cleared drugs, most recently cleared first; a chart is hidden when its drug is effectively zero
+  for the whole selected range (so shorter ranges only hide charts from the bottom), with a
+  "Hidden: ..." note and an empty-period message. Frontend only (drug-levels-charts,
+  drug-level-chart).
 - NEXT STEPS: next-dose-due per medication; then rearrange what lives on which page (page
   assignment is provisional).
 
