@@ -174,6 +174,8 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
    */
   private attachTouchHandlers(u: uPlot): void {
     const over = u.over;
+    // Tell the app's swipe pager not to change page for drags that start on the plot.
+    over.dataset['noPageSwipe'] = '';
     const moveCursor = (e: TouchEvent) => {
       const touch = e.touches[0];
       if (!touch) {

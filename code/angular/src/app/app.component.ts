@@ -46,6 +46,11 @@ export class AppComponent implements AfterViewInit {
   totalPages: number = 4;
   startX: number = 0;
 
+  // True when the current touch began inside an element marked [data-no-page-swipe] (e.g. a
+  // chart's plot area, where horizontal drags move the cursor). Such touches never change
+  // page. Any element that needs horizontal drags for itself can opt out the same way.
+  private swipeDisabled = false;
+
   isInitialLoad: boolean = true;
 
   pageNames: string[] = ['input', 'history', 'report', 'charts'];
@@ -91,9 +96,14 @@ export class AppComponent implements AfterViewInit {
 
   onTouchStart(event: TouchEvent) {
     this.startX = event.touches[0].clientX;
+    const target = event.target as Element | null;
+    this.swipeDisabled = target?.closest('[data-no-page-swipe]') != null;
   }
 
   onTouchMove(event: TouchEvent) {
+    if (this.swipeDisabled) {
+      return;
+    }
     const currentX = event.touches[0].clientX;
     const diff = this.startX - currentX;
 
