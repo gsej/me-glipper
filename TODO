@@ -51,11 +51,9 @@ Not a classic report. It should show, per medication:
   tirz 24 h, reta 36 h — approximate placeholders); ka derived from Tmax by bisection
   (AbsorptionRateFromTmax, ka > k root; Tmax must be < t½/ln 2); limiting form used when
   ka ≈ k. GET /api/levels (page 3 numbers) now uses FirstOrder. 77 tests green.
-- TEMPORARY comparison line: GET /api/levels/series also returns InstantAmountsMg, drawn as a
-  dashed grey "Instant" line on each chart. REMOVE once the absorption curve has been checked
-  (LevelSeriesResponse.InstantAmountsMg, LevelsController, levels.service.ts instantAmountsMg,
-  drug-level-chart comparisonAmountsMg input, drug-levels-charts template + footnote,
-  LevelsApiTests series assertion).
+- STEP 5 DONE: removed the temporary dashed grey "Instant" comparison line from the charts
+  (InstantAmountsMg dropped from GET /api/levels/series and the frontend). The Instant model
+  stays in DrugLevelCalculator (used by tests). Page 3 caption now says "with gradual absorption".
 - NEXT STEPS: next-dose-due per medication; then rearrange what lives on which page (page
   assignment is provisional).
 

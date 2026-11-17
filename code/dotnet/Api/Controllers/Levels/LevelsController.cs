@@ -50,13 +50,10 @@ public class LevelsController : ControllerBase
         var start = allDoseTimes.Min();
         var times = BuildTimeGrid(start, now, allDoseTimes);
 
-        // InstantAmountsMg is a TEMPORARY comparison line (instant-decay model) for checking the
-        // first-order absorption curve on the chart; remove it once that has been checked.
         var series = dosed
             .Select(x => new DrugLevelSeries(
                 x.Drug.Name,
-                DrugLevelCalculator.AmountRemainingSeriesMg(x.Doses, times, x.Drug, AbsorptionModel.FirstOrder),
-                DrugLevelCalculator.AmountRemainingSeriesMg(x.Doses, times, x.Drug, AbsorptionModel.Instant)))
+                DrugLevelCalculator.AmountRemainingSeriesMg(x.Doses, times, x.Drug, AbsorptionModel.FirstOrder)))
             .ToList();
 
         return new LevelSeriesResponse(times, series);

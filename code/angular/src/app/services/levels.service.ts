@@ -16,9 +16,6 @@ export interface DrugLevelSeries {
   medicationName: string;
   // First-order absorption (Bateman) model.
   amountsMg: number[];
-  // TEMPORARY: instant-decay model, shown as a comparison line while the absorption curve is
-  // checked. Remove once checked.
-  instantAmountsMg: number[];
 }
 
 export interface LevelSeriesResponse {

@@ -89,7 +89,6 @@ public class LevelsApiTests : IDisposable
         series.Series.Select(s => s.MedicationName)
             .Should().BeEquivalentTo(new[] { "Semaglutide", "Tirzepatide" });
         // Every series aligns element-for-element with the shared time axis.
-        series.Series.Should().OnlyContain(s =>
-            s.AmountsMg.Count == series.Times.Count && s.InstantAmountsMg.Count == series.Times.Count);
+        series.Series.Should().OnlyContain(s => s.AmountsMg.Count == series.Times.Count);
     }
 }

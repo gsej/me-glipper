@@ -9,8 +9,5 @@ public record LevelSeriesResponse(IReadOnlyList<DateTime> Times, IReadOnlyList<D
 
 /// <summary>
 /// One drug's series. <see cref="AmountsMg"/> uses the first-order absorption (Bateman) model.
-/// <see cref="InstantAmountsMg"/> is the instant-decay model, kept TEMPORARILY as a comparison
-/// line while the absorption curve is checked; remove it afterwards.
 /// </summary>
-public record DrugLevelSeries(
-    string MedicationName, IReadOnlyList<double> AmountsMg, IReadOnlyList<double> InstantAmountsMg);
+public record DrugLevelSeries(string MedicationName, IReadOnlyList<double> AmountsMg);
