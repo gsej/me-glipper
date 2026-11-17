@@ -113,6 +113,8 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
     } else {
       this.chart = new uPlot(this.buildOptions(), this.data, this.chartContainer.nativeElement);
       this.builtYMax = this.yMax;
+      // The legend only exists once the chart is built; shrink the plot so it fits in the box.
+      this.chart.setSize(this.currentSize());
     }
   }
 
@@ -165,11 +167,19 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
     this.resizeObserver.observe(this.chartContainer.nativeElement);
   }
 
+  /**
+   * Size for uPlot. uPlot's height covers the plot and axes but not the legend, which it adds
+   * below; subtract the legend's height so the whole chart, legend included, fits in the
+   * container and the legend doesn't overflow into the space below it. (The legend is hidden
+   * with `visibility`, so it keeps its height even when not shown.)
+   */
   private currentSize(): { width: number; height: number } {
     const el = this.chartContainer!.nativeElement;
+    const legend = this.chart?.root.querySelector<HTMLElement>('.u-legend');
+    const legendHeight = legend?.offsetHeight ?? 0;
     return {
       width: el.clientWidth || 300,
-      height: el.clientHeight || 200,
+      height: Math.max((el.clientHeight || 200) - legendHeight, 100),
     };
   }
 }
