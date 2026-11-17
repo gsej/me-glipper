@@ -113,6 +113,7 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
     } else {
       this.chart = new uPlot(this.buildOptions(), this.data, this.chartContainer.nativeElement);
       this.builtYMax = this.yMax;
+      this.attachTouchHandlers(this.chart);
       // The legend only exists once the chart is built; shrink the plot so it fits in the box.
       this.chart.setSize(this.currentSize());
     }
@@ -153,6 +154,30 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
         ],
       },
     };
+  }
+
+  /**
+   * uPlot only listens for mouse events. On a touchscreen a tap is turned into a synthetic click
+   * (so it moves the cursor), but a drag is treated as a scroll and sends no mouse moves, so the
+   * cursor wouldn't follow the finger. Move it ourselves on touchstart/touchmove. Vertical swipes
+   * still scroll the page (`touch-action: pan-y` in the SCSS); horizontal drags reach us here.
+   * The listeners live on uPlot's own element, so they go when the chart is destroyed.
+   */
+  private attachTouchHandlers(u: uPlot): void {
+    const over = u.over;
+    const moveCursor = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (!touch) {
+        return;
+      }
+      const rect = over.getBoundingClientRect();
+      u.setCursor({
+        left: Math.min(Math.max(touch.clientX - rect.left, 0), rect.width),
+        top: Math.min(Math.max(touch.clientY - rect.top, 0), rect.height),
+      });
+    };
+    over.addEventListener('touchstart', moveCursor, { passive: true });
+    over.addEventListener('touchmove', moveCursor, { passive: true });
   }
 
   private setupResizeObserver(): void {

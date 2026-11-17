@@ -13,3 +13,9 @@
 :host ::ng-deep .uplot.cursor-active .u-legend {
   visibility: visible;
 }
+
+// Let vertical swipes scroll the page but hand horizontal drags to the chart, so the cursor can
+// follow a finger (see attachTouchHandlers).
+:host ::ng-deep .uplot .u-over {
+  touch-action: pan-y;
+}
