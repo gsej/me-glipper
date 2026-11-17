@@ -1,7 +1,19 @@
 name: webui-prod
 
-on: 
+on:
   workflow_dispatch:
+  push:
+    branches:
+      - master
+    # Only redeploy when the frontend (or this workflow) changes.
+    paths:
+      - 'code/angular/**'
+      - '.github/workflows/webui-prod.yml'
+
+# Queue rather than overlap GitHub Pages deployments from quick successive pushes.
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs: 
   build:

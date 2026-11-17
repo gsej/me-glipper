@@ -20,7 +20,7 @@ The backend runs in a Docker container. It reads and writes a SQLite database fi
 
 ### Frontend
 
-Deployed via a GitHub Actions workflow (`.github/workflows/webui-prod.yml`), triggered with **workflow_dispatch** from the GitHub Actions UI.
+Deployed via a GitHub Actions workflow (`.github/workflows/webui-prod.yml`). It runs automatically on pushes to `master` that change the frontend (`code/angular/**`) or the workflow itself, and can also be run by hand (**workflow_dispatch**) from the GitHub Actions UI. The API is deployed separately (see Backend), so a change that needs a new API should have the API deployed too.
 
 The workflow builds the Angular app and deploys the static files to **GitHub Pages**. The production API URL is injected at build time via the `API_URL` environment variable into `settings.json` (which points to `localhost:5200` in source control for local development).
 
