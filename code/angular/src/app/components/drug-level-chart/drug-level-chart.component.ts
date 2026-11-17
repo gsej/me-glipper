@@ -19,6 +19,12 @@ const Y_AXIS_SIZE_PX = 50;
 const Y_AXIS_LABEL_SIZE_PX = 30;
 export const PLOT_LEFT_PX = Y_AXIS_SIZE_PX + Y_AXIS_LABEL_SIZE_PX;
 
+/** uPlot sync group shared by every drug chart, so their cursors move together. */
+const CURSOR_SYNC_KEY = 'drug-levels';
+
+/** uPlot's setCursor(opts, fireHooks, publishToSyncGroup); the typings omit the third arg. */
+type SetCursorWithPublish = (opts: { left: number; top: number }, fire: boolean, pub: boolean) => void;
+
 /**
  * Renders one drug's estimated-level series as a uPlot line chart. Presentational: the
  * data (shared ISO times + aligned amounts) and the visible range come in via @Input;
@@ -143,6 +149,9 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
         },
       ],
       axes: [{}, { label: 'mg', size: Y_AXIS_SIZE_PX, labelSize: Y_AXIS_LABEL_SIZE_PX }],
+      // Link cursors across all drug charts: moving on one shows the same moment on the others
+      // (they share the time grid and range), each with its own legend values.
+      cursor: { sync: { key: CURSOR_SYNC_KEY } },
       hooks: {
         // Show the legend (values at the cursor) only while the cursor is over the plot; uPlot
         // sets cursor.left to a negative value when it leaves. Styled in the component SCSS.
@@ -171,10 +180,17 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
         return;
       }
       const rect = over.getBoundingClientRect();
-      u.setCursor({
-        left: Math.min(Math.max(touch.clientX - rect.left, 0), rect.width),
-        top: Math.min(Math.max(touch.clientY - rect.top, 0), rect.height),
-      });
+      // fire hooks (legend visibility) and publish to the sync group, which uPlot doesn't do
+      // for a programmatic setCursor unless asked. The runtime takes a third `_pub` argument
+      // that uPlot's type definitions omit, hence the cast.
+      (u.setCursor as SetCursorWithPublish)(
+        {
+          left: Math.min(Math.max(touch.clientX - rect.left, 0), rect.width),
+          top: Math.min(Math.max(touch.clientY - rect.top, 0), rect.height),
+        },
+        true,
+        true,
+      );
     };
     over.addEventListener('touchstart', moveCursor, { passive: true });
     over.addEventListener('touchmove', moveCursor, { passive: true });
