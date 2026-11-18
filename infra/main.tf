@@ -57,6 +57,9 @@ resource "proxmox_virtual_environment_container" "meglipper" {
     volume = var.storage_datastore_id
     size   = "${var.data_size_gb}G"
     path   = "/opt/me-glipper-data/database"
+    # Include the database in vzdump backups (the proxmox repo's backup-full.sh).
+    # Proxmox leaves volume mount points out of backups unless this is set.
+    backup = true
   }
 
   network_interface {
