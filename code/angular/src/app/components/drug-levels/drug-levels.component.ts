@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DrugLevel, LevelsService } from '../../services/levels.service';
+import { DrugLevel, EFFECTIVELY_ZERO_MG, LevelsService } from '../../services/levels.service';
 import { DoseService } from '../../services/dose.service';
 
 @Component({
@@ -45,6 +45,18 @@ export class DrugLevelsComponent implements OnInit {
         this.isLoading = false;
       },
     });
+  }
+
+  /** Drugs with a measurable amount; ones that have effectively cleared are hidden. */
+  get visibleLevels(): DrugLevel[] {
+    return this.levels.filter((l) => l.amountRemainingMg >= EFFECTIVELY_ZERO_MG);
+  }
+
+  /** Names of the drugs hidden because they are effectively zero. */
+  get hiddenNames(): string[] {
+    return this.levels
+      .filter((l) => l.amountRemainingMg < EFFECTIVELY_ZERO_MG)
+      .map((l) => l.medicationName);
   }
 
   onRetry(): void {

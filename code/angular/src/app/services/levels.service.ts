@@ -3,6 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SettingsService } from '../settings/settings.service';
 
+/**
+ * Below this an amount is treated as effectively zero. Amounts are shown to 2 decimal places,
+ * so anything under this already displays as 0.00 mg. Used by the levels page and the charts.
+ */
+export const EFFECTIVELY_ZERO_MG = 0.005;
+
 export interface DrugLevel {
   medicationName: string;
   amountRemainingMg: number;

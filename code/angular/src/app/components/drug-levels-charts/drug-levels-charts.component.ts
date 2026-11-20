@@ -5,14 +5,12 @@ import {
   DrugLevelChartComponent,
   PLOT_LEFT_PX,
 } from '../drug-level-chart/drug-level-chart.component';
-import { DrugLevelSeries, LevelsService } from '../../services/levels.service';
+import {
+  DrugLevelSeries,
+  EFFECTIVELY_ZERO_MG,
+  LevelsService,
+} from '../../services/levels.service';
 import { DoseService } from '../../services/dose.service';
-
-/**
- * Below this an amount is treated as effectively zero. Matches page 3, which shows amounts to
- * 2 decimal places, so anything under this already displays as 0.00 mg.
- */
-const EFFECTIVELY_ZERO_MG = 0.005;
 
 /** Headroom above a drug's all-time peak, so the line doesn't touch the top of the chart. */
 const Y_HEADROOM = 1.05;

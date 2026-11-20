@@ -61,6 +61,9 @@ Not a classic report. It should show, per medication:
   for the whole selected range (so shorter ranges only hide charts from the bottom), with a
   "Hidden: ..." note and an empty-period message. Frontend only (drug-levels-charts,
   drug-level-chart).
+- Page 3 (Estimated Levels) now hides drugs that are effectively zero too, with a "Hidden
+  (effectively zero): ..." note, and "No measurable levels — all medications have cleared."
+  when every drug is hidden. EFFECTIVELY_ZERO_MG is shared from levels.service.ts.
 - NEXT-DOSE-DUE DONE: new first page "Overview" (overview-page -> next-doses component ->
   LevelsService.getNextDoses -> GET /api/levels/next-doses). Next due = last TakenAt + the
   medication's dosing interval. Intervals are hardcoded in DosingSchedules (sema 7 d, tirz 5 d,
