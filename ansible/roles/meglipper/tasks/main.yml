@@ -80,8 +80,10 @@
     repo: "{{ meglipper_repo }}"
     dest: "{{ meglipper_dir }}"
     version: "{{ meglipper_version }}"
-    # Never clobber local build artefacts; just fast-forward the source.
-    force: false
+    # The box's clone is a build source only: always match origin/master exactly, even after
+    # history rewrites (amend / force-push). Untracked files (compose.env, written just below)
+    # are left alone; the DB and the service .env live in meglipper_data_dir.
+    force: true
 
 - name: Read the checked-out git short hash
   ansible.builtin.command:
