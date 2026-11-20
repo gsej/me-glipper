@@ -20,8 +20,9 @@ interface ChartSeries extends DrugLevelSeries {
   /** Fixed y-axis maximum (all-time peak plus headroom), or null to auto-scale. */
   yMax: number | null;
   /**
-   * Unix seconds of the last point at or above EFFECTIVELY_ZERO_MG; every later point is
-   * effectively zero. Null while the drug is still active (its latest point is above it).
+   * Unix seconds of the last point up to now at or above EFFECTIVELY_ZERO_MG; every later point
+   * up to now is effectively zero. Null while the drug is still active (above it now). The
+   * projection past now is ignored, so a drug active today never counts as cleared.
    */
   zeroSinceSecs: number | null;
 }
@@ -45,7 +46,8 @@ export class DrugLevelsChartsComponent implements OnInit {
   rangeDays: number | null = 30;
   /** Left inset that lines headings and notes up with each chart's y-axis line. */
   readonly plotLeftPx = PLOT_LEFT_PX;
-  private lastTimeSecs = 0;
+  /** Unix seconds of the API's "now": history up to here, projection after. */
+  nowSecs = 0;
 
   // Window options in ascending order; 1M/3M approximate 30/90 days.
   readonly rangeOptions: { label: string; days: number | null }[] = [
@@ -77,6 +79,7 @@ export class DrugLevelsChartsComponent implements OnInit {
     this.levelsService.getSeries().subscribe({
       next: (response) => {
         this.times = response.times;
+        this.nowSecs = Math.floor(new Date(response.now).getTime() / 1000);
         this.series = this.prepareSeries(response.times, response.series);
         this.isLoading = false;
       },
@@ -110,24 +113,28 @@ export class DrugLevelsChartsComponent implements OnInit {
       return true;
     }
     // Same window start as the chart's own range filter.
-    const cutoffSecs = this.lastTimeSecs - this.rangeDays * 24 * 60 * 60;
+    const cutoffSecs = this.nowSecs - this.rangeDays * 24 * 60 * 60;
     return s.zeroSinceSecs >= cutoffSecs;
   }
 
   private prepareSeries(times: string[], series: DrugLevelSeries[]): ChartSeries[] {
     const xs = times.map((t) => Math.floor(new Date(t).getTime() / 1000));
-    this.lastTimeSecs = xs.length > 0 ? xs[xs.length - 1] : 0;
+    // Index of the last point at or before now; later points are the projection.
+    let nowIndex = xs.length - 1;
+    while (nowIndex > 0 && xs[nowIndex] > this.nowSecs) {
+      nowIndex--;
+    }
 
     const prepared = series.map((s): ChartSeries => {
       const peak = s.amountsMg.reduce((max, a) => Math.max(max, a), 0);
       let lastAbove = -1;
-      for (let i = s.amountsMg.length - 1; i >= 0; i--) {
+      for (let i = nowIndex; i >= 0; i--) {
         if (s.amountsMg[i] >= EFFECTIVELY_ZERO_MG) {
           lastAbove = i;
           break;
         }
       }
-      const active = lastAbove >= 0 && lastAbove === s.amountsMg.length - 1;
+      const active = lastAbove >= 0 && lastAbove === nowIndex;
       return {
         ...s,
         yMax: peak > 0 ? peak * Y_HEADROOM : null,

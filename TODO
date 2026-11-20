@@ -75,12 +75,15 @@ Not a classic report. It should show, per medication:
   (?page=overview); pageNames = overview, input, history, report, charts.
   DoseService.dosesChanged$ fires after a dose is added or deleted; next-doses, drug-levels and
   drug-levels-charts reload on it.
+- CHART PROJECTION DONE: each chart extends past now with a dashed "projected" line (assumes no
+  further doses), split 80/20 past/future whatever the range (future shown = past shown / 4,
+  past capped at the history there is), with a grey "today" line at now. GET /api/levels/series
+  now returns Now and runs to now + a quarter of the history span (ForecastFraction), which covers
+  every range. Active/cleared and the range cutoff are judged at now, not at the projection's end.
 - NEXT STEPS:
   - Rearrange what lives on which page (page assignment is provisional). Rename page-1..page-4
     to descriptive names at the same time (the new page is already overview-page).
   - Make the dosing intervals user-alterable (stored per user, not hardcoded).
-  - Charts: extend each chart a few days into the future, so the expected level until the
-    next dose is visible.
 
 Parked (re-enable in later slices)
 ----------------------------------

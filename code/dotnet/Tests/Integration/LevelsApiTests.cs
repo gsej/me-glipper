@@ -93,6 +93,39 @@ public class LevelsApiTests : IDisposable
     }
 
     [Fact]
+    public async Task Series_ProjectsAQuarterOfTheHistoryPastNow()
+    {
+        var client = _factory.CreateClientWithKey(ApiTestFactory.AliceKey);
+        var firstDose = DateTime.UtcNow.AddDays(-20);
+        await client.PostAsJsonAsync("/api/dose",
+            new CreateDoseRequest(firstDose, "Semaglutide", 1.0m));
+
+        var series = await client.GetFromJsonAsync<LevelSeriesResponse>("/api/levels/series");
+
+        series!.Times.Should().Contain(series.Now);
+        var expectedEnd = series.Now + (series.Now - firstDose) * 0.25;
+        series.Times[^1].Should().BeCloseTo(expectedEnd, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public async Task Series_ProjectionDecaysWithNoFurtherDoses()
+    {
+        var client = _factory.CreateClientWithKey(ApiTestFactory.AliceKey);
+        // Long enough ago that the dose is well past its absorption peak.
+        await client.PostAsJsonAsync("/api/dose",
+            new CreateDoseRequest(DateTime.UtcNow.AddDays(-20), "Semaglutide", 1.0m));
+
+        var series = await client.GetFromJsonAsync<LevelSeriesResponse>("/api/levels/series");
+
+        var nowIndex = series!.Times.ToList().IndexOf(series.Now);
+        var amounts = series.Series.Single().AmountsMg;
+        var projected = amounts.Skip(nowIndex).ToList();
+        projected.Count.Should().BeGreaterThan(1);
+        projected.Should().BeInDescendingOrder();
+        projected[^1].Should().BeLessThan(projected[0]);
+    }
+
+    [Fact]
     public async Task NextDoses_WithoutApiKey_ReturnsUnauthorized()
     {
         var client = _factory.CreateClientWithKey(null);

@@ -47,6 +47,7 @@
             [color]="colorFor(s.medicationName)"
             [yMax]="s.yMax"
             [rangeDays]="rangeDays"
+            [nowSecs]="nowSecs"
           ></app-drug-level-chart>
         </div>
       </div>
@@ -63,7 +64,7 @@
     }
 
     <p class="text-xs text-gray-400 pr-1 pb-2" [style.padding-left.px]="plotLeftPx">
-      Estimated amount in the body over time.
+      Estimated amount in the body over time. Dashed: projected, assuming no further doses.
     </p>
   }
 }

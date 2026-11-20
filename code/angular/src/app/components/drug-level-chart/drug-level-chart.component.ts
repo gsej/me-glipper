@@ -19,6 +19,14 @@ const Y_AXIS_SIZE_PX = 50;
 const Y_AXIS_LABEL_SIZE_PX = 30;
 export const PLOT_LEFT_PX = Y_AXIS_SIZE_PX + Y_AXIS_LABEL_SIZE_PX;
 
+/**
+ * Share of the chart given to the projection: the future shown is a quarter of the past shown,
+ * so past and future split the chart 80/20 whatever the range.
+ */
+const FUTURE_TO_PAST_RATIO = 0.25;
+
+const TODAY_LINE_COLOR = '#9ca3af'; // gray-400
+
 /** uPlot sync group shared by every drug chart, so their cursors move together. */
 const CURSOR_SYNC_KEY = 'drug-levels';
 
@@ -46,8 +54,13 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
    * stretching a near-zero tail to fill the chart. `null` auto-scales.
    */
   @Input() yMax: number | null = null;
-  /** Days of history to show (from the latest point), or `null` for all data. */
+  /** Days of history to show (back from now), or `null` for all of it. */
   @Input() rangeDays: number | null = 30;
+  /**
+   * Unix seconds of "now": points up to here are history (solid), later ones the projection
+   * (dashed). A "today" line is drawn here.
+   */
+  @Input() nowSecs = 0;
 
   @ViewChild('chartContainer') private chartContainer?: ElementRef<HTMLDivElement>;
 
@@ -78,27 +91,42 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
     this.renderChart();
   }
 
-  /** Build uPlot [x, y]: x = unix seconds (ascending), filtered to the selected range. */
+  /**
+   * Build uPlot [x, history, projection]: x = unix seconds (ascending), windowed to the selected
+   * range back from now plus a quarter of that forward. The two y series share the point at now
+   * so the line is continuous; each is null on the other's side.
+   */
   private toChartData(): uPlot.AlignedData | undefined {
     if (this.times.length === 0) {
       return undefined;
     }
-    let xs = this.times.map((t) => Math.floor(new Date(t).getTime() / 1000));
-    let ys = this.amountsMg;
+    const allXs = this.times.map((t) => Math.floor(new Date(t).getTime() / 1000));
 
-    if (this.rangeDays != null && xs.length > 0) {
-      const cutoffSecs = xs[xs.length - 1] - this.rangeDays * 24 * 60 * 60;
-      const from = xs.findIndex((x) => x >= cutoffSecs);
-      if (from > 0) {
-        xs = xs.slice(from);
-        ys = ys.slice(from);
+    // Past shown: the selected range, capped at the history there is.
+    const firstSecs = allXs[0];
+    const startSecs =
+      this.rangeDays == null
+        ? firstSecs
+        : Math.max(firstSecs, this.nowSecs - this.rangeDays * 24 * 60 * 60);
+    const endSecs = this.nowSecs + (this.nowSecs - startSecs) * FUTURE_TO_PAST_RATIO;
+
+    const xs: number[] = [];
+    const history: (number | null)[] = [];
+    const projection: (number | null)[] = [];
+    allXs.forEach((x, i) => {
+      if (x < startSecs || x > endSecs) {
+        return;
       }
-    }
+      const y = this.amountsMg[i];
+      xs.push(x);
+      history.push(x <= this.nowSecs ? y : null);
+      projection.push(x >= this.nowSecs ? y : null);
+    });
 
     if (xs.length === 0) {
       return undefined;
     }
-    return [xs, ys];
+    return [xs, history, projection];
   }
 
   private renderChart(): void {
@@ -147,12 +175,21 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
           width: 2,
           points: { show: false },
         },
+        {
+          label: 'projected mg',
+          stroke: this.color,
+          fill: this.color + '0d', // fainter than the history's fill
+          width: 2,
+          dash: [6, 4],
+          points: { show: false },
+        },
       ],
       axes: [{}, { label: 'mg', size: Y_AXIS_SIZE_PX, labelSize: Y_AXIS_LABEL_SIZE_PX }],
       // Link cursors across all drug charts: moving on one shows the same moment on the others
       // (they share the time grid and range), each with its own legend values.
       cursor: { sync: { key: CURSOR_SYNC_KEY } },
       hooks: {
+        draw: [(u) => this.drawTodayLine(u)],
         // Show the legend (values at the cursor) only while the cursor is over the plot; uPlot
         // sets cursor.left to a negative value when it leaves. Styled in the component SCSS.
         setCursor: [
@@ -163,6 +200,30 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
         ],
       },
     };
+  }
+
+  /** A thin vertical line at now, labelled "today", between history and projection. */
+  private drawTodayLine(u: uPlot): void {
+    const x = Math.round(u.valToPos(this.nowSecs, 'x', true));
+    const { top, height, left, width } = u.bbox;
+    if (x < left || x > left + width) {
+      return;
+    }
+    const ctx = u.ctx;
+    const pxRatio = window.devicePixelRatio || 1;
+    ctx.save();
+    ctx.strokeStyle = TODAY_LINE_COLOR;
+    ctx.lineWidth = pxRatio;
+    ctx.beginPath();
+    ctx.moveTo(x, top);
+    ctx.lineTo(x, top + height);
+    ctx.stroke();
+    ctx.fillStyle = TODAY_LINE_COLOR;
+    ctx.font = `${10 * pxRatio}px sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillText('today', x - 3 * pxRatio, top + 2 * pxRatio);
+    ctx.restore();
   }
 
   /**

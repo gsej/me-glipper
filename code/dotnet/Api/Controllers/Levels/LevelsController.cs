@@ -15,6 +15,12 @@ public class LevelsController : ControllerBase
     // each dose's start is captured exactly (the first-order peak comes later, at ~Tmax).
     private static readonly TimeSpan SeriesStep = TimeSpan.FromHours(6);
 
+    // How far past now the series runs, as a fraction of the history span (first dose -> now).
+    // The charts show past and future 80/20, i.e. future = past / 4, and no range can show more
+    // past than the whole history, so this covers every range in one response. The projection
+    // assumes no further doses.
+    private const double ForecastFraction = 0.25;
+
     private readonly DoseRepository _doseRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -44,11 +50,12 @@ public class LevelsController : ControllerBase
         var now = DateTime.UtcNow;
 
         if (dosed.Count == 0)
-            return new LevelSeriesResponse(Array.Empty<DateTime>(), Array.Empty<DrugLevelSeries>());
+            return new LevelSeriesResponse(now, Array.Empty<DateTime>(), Array.Empty<DrugLevelSeries>());
 
         var allDoseTimes = dosed.SelectMany(x => x.Doses).Select(d => d.TakenAt).ToList();
         var start = allDoseTimes.Min();
-        var times = BuildTimeGrid(start, now, allDoseTimes);
+        var end = now + (now - start) * ForecastFraction;
+        var times = BuildTimeGrid(start, now, end, allDoseTimes);
 
         var series = dosed
             .Select(x => new DrugLevelSeries(
@@ -56,7 +63,7 @@ public class LevelsController : ControllerBase
                 DrugLevelCalculator.AmountRemainingSeriesMg(x.Doses, times, x.Drug, AbsorptionModel.FirstOrder)))
             .ToList();
 
-        return new LevelSeriesResponse(times, series);
+        return new LevelSeriesResponse(now, times, series);
     }
 
     /// <summary>
@@ -114,15 +121,17 @@ public class LevelsController : ControllerBase
     }
 
     /// <summary>
-    /// A shared ascending x-axis from the first dose to now: a fixed-step grid plus the exact
-    /// dose instants (so each dose's start lands on a sample) and <paramref name="now"/> as the final point.
+    /// A shared ascending x-axis from the first dose to <paramref name="end"/> (past now, for the
+    /// projection): a fixed-step grid plus the exact dose instants (so each dose's start lands on a
+    /// sample), <paramref name="now"/> (where history meets projection) and <paramref name="end"/>.
     /// </summary>
-    private static IReadOnlyList<DateTime> BuildTimeGrid(DateTime start, DateTime now, IEnumerable<DateTime> doseTimes)
+    private static IReadOnlyList<DateTime> BuildTimeGrid(DateTime start, DateTime now, DateTime end, IEnumerable<DateTime> doseTimes)
     {
         var grid = new SortedSet<DateTime>();
-        for (var t = start; t < now; t += SeriesStep)
+        for (var t = start; t < end; t += SeriesStep)
             grid.Add(t);
         grid.Add(now);
+        grid.Add(end);
         foreach (var dt in doseTimes)
             if (dt >= start && dt <= now)
                 grid.Add(dt);

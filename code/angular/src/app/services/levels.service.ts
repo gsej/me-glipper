@@ -25,6 +25,9 @@ export interface DrugLevelSeries {
 }
 
 export interface LevelSeriesResponse {
+  // One of the times: points up to it are history, later ones a projection assuming no further
+  // doses.
+  now: string;
   // Shared x-axis (ISO timestamps); each series' amountsMg aligns to it element-for-element.
   times: string[];
   series: DrugLevelSeries[];
