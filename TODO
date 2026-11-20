@@ -92,6 +92,9 @@ Parked (re-enable in later slices)
 
 Other
 -----
+- DONE: update banner. When the service worker has a new version ready, a bar offers "Reload"
+  (AppUpdateService + update-banner); it also checks for updates when the app returns to the
+  foreground. settings.json is gone: UI git hash and API URL are build-time constants.
 - Medication list is hard-coded (Semaglutide, Tirzepatide, Retatrutide); dose unit fixed
   to mg. Revisit if this needs to be configurable.
 - CLAUDE.md: endpoint/field names updated to the dose domain in the data-entry notes;

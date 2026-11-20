@@ -50,6 +50,9 @@ of `apikey` (user `ApiUser`). The Angular app's `apiUrl` and UI git hash are
 build-time constants (`ng build --define API_URL=… --define GIT_HASH=…`, see
 `src/build-constants.d.ts`). Without them, as in local dev, it uses
 `http://localhost:5200` and `local`.
+New app versions are announced by an update banner (`AppUpdateService`, via
+`SwUpdate`), which also checks for updates when the app returns to the foreground.
+The service worker is off in `ng serve`, so the banner never shows in local dev.
 
 ## Testing conventions
 
