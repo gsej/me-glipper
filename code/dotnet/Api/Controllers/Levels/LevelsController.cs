@@ -60,6 +60,42 @@ public class LevelsController : ControllerBase
     }
 
     /// <summary>
+    /// When the next dose of each medication is due (last dose + its dosing interval). Only
+    /// medications currently being taken are included: never-taken ones, and ones whose next
+    /// dose was due more than <see cref="DosingSchedules.NotCurrentAfterOverdue"/> ago, are left out.
+    /// </summary>
+    [HttpGet("next-doses")]
+    public async Task<NextDosesResponse> GetNextDoses()
+    {
+        var userId = (string)_httpContextAccessor.HttpContext!.Items[ApiKeyAuthFilter.UserIdKeyname]!;
+        var entities = await _doseRepository.GetAllAsync(userId);
+        var now = DateTime.UtcNow;
+
+        var nextDoses = new List<NextDose>();
+        foreach (var schedule in DosingSchedules.All)
+        {
+            var last = entities
+                .Where(e => string.Equals(e.MedicationName, schedule.MedicationName, StringComparison.OrdinalIgnoreCase))
+                .MaxBy(e => e.TakenAt);
+            if (last is null)
+                continue;
+
+            var nextDueAt = DosingSchedules.NextDueAt(last.TakenAt, schedule);
+            if (!DosingSchedules.IsCurrent(nextDueAt, now))
+                continue;
+
+            nextDoses.Add(new NextDose(
+                schedule.MedicationName,
+                schedule.IntervalDays,
+                last.TakenAt,
+                (double)last.DoseAmountMg,
+                nextDueAt));
+        }
+
+        return new NextDosesResponse(nextDoses);
+    }
+
+    /// <summary>
     /// The presets the current user has actually dosed, paired with those doses. Drugs with no
     /// doses are excluded (no zero rows / empty series for untaken medications).
     /// </summary>

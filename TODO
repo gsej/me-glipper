@@ -61,8 +61,23 @@ Not a classic report. It should show, per medication:
   for the whole selected range (so shorter ranges only hide charts from the bottom), with a
   "Hidden: ..." note and an empty-period message. Frontend only (drug-levels-charts,
   drug-level-chart).
-- NEXT STEPS: next-dose-due per medication; then rearrange what lives on which page (page
-  assignment is provisional).
+- NEXT-DOSE-DUE DONE: new first page "Overview" (overview-page -> next-doses component ->
+  LevelsService.getNextDoses -> GET /api/levels/next-doses). Next due = last TakenAt + the
+  medication's dosing interval. Intervals are hardcoded in DosingSchedules (sema 7 d, tirz 5 d,
+  reta 6 d), kept separate from DrugParameters because they're the user's regimen, not PK data.
+  No "active" flag: a medication is shown only if it has been taken and its next dose is due no
+  more than 28 days ago (DosingSchedules.NotCurrentAfterOverdue). Cards show the next due date
+  (no time), a day-based relative line ("due today", "due tomorrow", "due in 2 days", "overdue by
+  1 day" — local calendar days, red only once the due date has passed), and the last dose. App now opens on the overview page
+  (?page=overview); pageNames = overview, input, history, report, charts.
+  DoseService.dosesChanged$ fires after a dose is added or deleted; next-doses, drug-levels and
+  drug-levels-charts reload on it.
+- NEXT STEPS:
+  - Rearrange what lives on which page (page assignment is provisional). Rename page-1..page-4
+    to descriptive names at the same time (the new page is already overview-page).
+  - Make the dosing intervals user-alterable (stored per user, not hardcoded).
+  - Charts: extend each chart a few days into the future, so the expected level until the
+    next dose is visible.
 
 Parked (re-enable in later slices)
 ----------------------------------

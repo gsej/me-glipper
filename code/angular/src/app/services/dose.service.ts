@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { SettingsService } from '../settings/settings.service';
 
@@ -35,6 +35,11 @@ export class DoseService {
 
   private errorSubject = new BehaviorSubject<string | null>(null);
   public error$ = this.errorSubject.asObservable();
+
+  // Fires after a dose is added or deleted, so views derived from the doses (levels, charts,
+  // next doses) can reload. Notes edits don't change any levels, so they don't fire it.
+  private dosesChangedSubject = new Subject<void>();
+  public dosesChanged$ = this.dosesChangedSubject.asObservable();
 
   private apiUrl: string;
 
@@ -79,8 +84,11 @@ export class DoseService {
     };
 
     return this.http.post<void>(`${this.apiUrl}/api/dose`, payload).pipe(
-      // After successfully adding a new dose, refresh the list.
-      tap(() => this.loadDoses()),
+      // After successfully adding a new dose, refresh the list and tell dependent views.
+      tap(() => {
+        this.loadDoses();
+        this.dosesChangedSubject.next();
+      }),
     );
   }
 
@@ -93,6 +101,11 @@ export class DoseService {
   deleteDose(doseId: string): Observable<void> {
     return this.http
       .delete<void>(`${this.apiUrl}/api/dose/${doseId}`)
-      .pipe(tap(() => this.loadDoses()));
+      .pipe(
+        tap(() => {
+          this.loadDoses();
+          this.dosesChangedSubject.next();
+        }),
+      );
   }
 }

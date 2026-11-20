@@ -13,6 +13,7 @@ import { SettingsService } from './settings/settings.service';
 import { HealthService } from './services/health.service';
 import { PiComponent } from './components/pi/pi.component';
 import { ApiKeyInputComponent } from './components/api-key-input/api-key-input.component';
+import { OverviewPageComponent } from './components/overview-page/overview-page.component';
 import { Page1Component } from './components/page-1/page-1.component';
 import { Page2Component } from './components/page-2/page-2.component';
 import { Page3Component } from './components/page-3/page-3.component';
@@ -22,6 +23,7 @@ import { Page4Component } from './components/page-4/page-4.component';
   selector: 'app-root',
   imports: [
     ReactiveFormsModule,
+    OverviewPageComponent,
     Page1Component,
     Page2Component,
     Page3Component,
@@ -43,7 +45,7 @@ export class AppComponent implements AfterViewInit {
   }
 
   currentPage: number = 0;
-  totalPages: number = 4;
+  totalPages: number = 5;
   startX: number = 0;
 
   // True when the current touch began inside an element marked [data-no-page-swipe] (e.g. a
@@ -53,7 +55,7 @@ export class AppComponent implements AfterViewInit {
 
   isInitialLoad: boolean = true;
 
-  pageNames: string[] = ['input', 'history', 'report', 'charts'];
+  pageNames: string[] = ['overview', 'input', 'history', 'report', 'charts'];
 
   @ViewChild('pagesContainer') pagesContainer!: ElementRef;
 

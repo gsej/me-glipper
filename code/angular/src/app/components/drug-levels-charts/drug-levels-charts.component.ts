@@ -1,10 +1,12 @@
 import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   DrugLevelChartComponent,
   PLOT_LEFT_PX,
 } from '../drug-level-chart/drug-level-chart.component';
 import { DrugLevelSeries, LevelsService } from '../../services/levels.service';
+import { DoseService } from '../../services/dose.service';
 
 /**
  * Below this an amount is treated as effectively zero. Matches page 3, which shows amounts to
@@ -35,6 +37,7 @@ interface ChartSeries extends DrugLevelSeries {
 })
 export class DrugLevelsChartsComponent implements OnInit {
   private readonly levelsService = inject(LevelsService);
+  private readonly doseService = inject(DoseService);
 
   times: string[] = [];
   /** Active drugs first (API order), then cleared drugs, most recently cleared first. */
@@ -60,6 +63,11 @@ export class DrugLevelsChartsComponent implements OnInit {
     Tirzepatide: '#10b981', // emerald-500
     Retatrutide: '#8b5cf6', // violet-500
   };
+
+  constructor() {
+    // Reload whenever a dose is added or deleted elsewhere in the app.
+    this.doseService.dosesChanged$.pipe(takeUntilDestroyed()).subscribe(() => this.load());
+  }
 
   ngOnInit(): void {
     this.load();

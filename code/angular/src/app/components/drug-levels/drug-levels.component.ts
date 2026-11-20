@@ -1,6 +1,8 @@
 import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DrugLevel, LevelsService } from '../../services/levels.service';
+import { DoseService } from '../../services/dose.service';
 
 @Component({
   selector: 'app-drug-levels',
@@ -11,10 +13,16 @@ import { DrugLevel, LevelsService } from '../../services/levels.service';
 })
 export class DrugLevelsComponent implements OnInit {
   private readonly levelsService = inject(LevelsService);
+  private readonly doseService = inject(DoseService);
 
   levels: DrugLevel[] = [];
   isLoading = false;
   error: string | null = null;
+
+  constructor() {
+    // Reload whenever a dose is added or deleted elsewhere in the app.
+    this.doseService.dosesChanged$.pipe(takeUntilDestroyed()).subscribe(() => this.loadLevels());
+  }
 
   ngOnInit(): void {
     this.loadLevels();

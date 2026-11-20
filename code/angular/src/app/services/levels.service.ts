@@ -24,6 +24,20 @@ export interface LevelSeriesResponse {
   series: DrugLevelSeries[];
 }
 
+export interface NextDose {
+  medicationName: string;
+  intervalDays: number;
+  // ISO timestamps (UTC).
+  lastTakenAt: string;
+  lastDoseAmountMg: number;
+  nextDueAt: string;
+}
+
+export interface NextDosesResponse {
+  // Only medications currently being taken (see the API's DosingSchedules).
+  nextDoses: NextDose[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -43,5 +57,9 @@ export class LevelsService {
 
   getSeries(): Observable<LevelSeriesResponse> {
     return this.http.get<LevelSeriesResponse>(`${this.apiUrl}/api/levels/series`);
+  }
+
+  getNextDoses(): Observable<NextDosesResponse> {
+    return this.http.get<NextDosesResponse>(`${this.apiUrl}/api/levels/next-doses`);
   }
 }
