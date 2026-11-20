@@ -46,8 +46,10 @@ npx ng test --watch=false --browsers=ChromeHeadless
 ```
 
 Local dev: the API's `appsettings.json` uses a local SQLite file and an API key
-of `apikey` (user `ApiUser`). The Angular app reads `apiUrl` at runtime from
-`settings.json`, which points at `localhost:5200` in source control.
+of `apikey` (user `ApiUser`). The Angular app's `apiUrl` and UI git hash are
+build-time constants (`ng build --define API_URL=… --define GIT_HASH=…`, see
+`src/build-constants.d.ts`). Without them, as in local dev, it uses
+`http://localhost:5200` and `local`.
 
 ## Testing conventions
 

@@ -37,15 +37,13 @@ jobs:
       - run: npm install
         working-directory: ${{ env.WORKING_DIR }}
 
-      - run: npm run build -- --base-href /me-glipper/
+      # The UI git hash and API URL are baked into the bundle (see src/build-constants.d.ts),
+      # so the hash shown in the app always matches the code that is running.
+      - run: >-
+          npm run build -- --base-href /me-glipper/
+          --define "GIT_HASH='$(git rev-parse --short HEAD)'"
+          --define "API_URL='${API_URL}'"
         working-directory: ${{ env.WORKING_DIR }}
-
-      - name: populate settings.json
-        run: |
-          cd ./${WORKING_DIR}/${{ env.BUILD_OUTPUT_DIR }}
-          export GITHASH="$(git rev-parse --short HEAD)"
-          envsubst < settings.template.json > settings.json
-          cat ./settings.json
 
       - name: upload built angular app
         uses: actions/upload-artifact@v4

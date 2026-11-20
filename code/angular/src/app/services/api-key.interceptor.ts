@@ -4,9 +4,8 @@ import { ApiKeyService } from './api-key.service';
 import { SettingsService } from '../settings/settings.service';
 
 /**
- * Attaches the x-api-key header to requests aimed at the API. apiUrl is empty during the
- * startup settings.json fetch, so the guard also keeps the key off that request and off any
- * request not targeting the configured API base URL.
+ * Attaches the x-api-key header to requests aimed at the API. Only requests aimed at the
+ * configured API base URL get the key.
  */
 export const apiKeyInterceptor: HttpInterceptorFn = (req, next) => {
   const apiUrl = inject(SettingsService).settings.apiUrl;
