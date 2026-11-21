@@ -11,26 +11,6 @@ namespace Api.DataAccess
         public DoseRepository(string connectionString)
         {
             _connectionString = connectionString;
-            EnsureTablesExist();
-        }
-
-        private void EnsureTablesExist()
-        {
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
-            var command = connection.CreateCommand();
-            command.CommandText = """
-                CREATE TABLE IF NOT EXISTS Doses (
-                    DoseId TEXT NOT NULL PRIMARY KEY,
-                    UserId TEXT NOT NULL,
-                    TakenAt TEXT NOT NULL,
-                    MedicationName TEXT NOT NULL,
-                    DoseAmountMg TEXT NOT NULL,
-                    Deleted INTEGER NOT NULL DEFAULT 0,
-                    Notes TEXT
-                )
-                """;
-            command.ExecuteNonQuery();
         }
 
         /// <summary>

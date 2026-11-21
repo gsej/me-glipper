@@ -7,11 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="dbup-sqlite" Version="6.0.4" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
     <!-- Overrides the vulnerable 2.1.11 pulled transitively by Microsoft.Data.Sqlite
          (advisory GHSA-2m69-gcr7-jv3q). Remove once Microsoft.Data.Sqlite references a patched bundle. -->
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.13" />
   </ItemGroup>
-  
+
+  <ItemGroup>
+    <!-- Schema migrations, run on startup by DatabaseMigrator. -->
+    <EmbeddedResource Include="Migrations\*.sql" />
+  </ItemGroup>
+
 </Project>

@@ -82,12 +82,15 @@ The service worker is off in `ng serve`, so the banner never shows in local dev.
   into an automatic `400`), with empty/whitespace normalised to `NULL` in the
   repository. Set it on create, or edit it later via `PUT /api/dose/{id}`. Use the
   name **`Notes`** consistently (entity/column/request/API/service/UI) — never `Comment`.
-- **Tables are created from code, not a migration framework** —
-  `DoseRepository` and `UserRepository` each run `CREATE TABLE IF NOT EXISTS` with the
-  full schema on startup (`EnsureTablesExist`). There is no support for migrating a
-  pre-existing database to a new shape; a schema change means dropping/recreating the
-  local dev DB (and restoring the single prod instance from a backup). Add new columns
-  to the `CREATE TABLE` directly.
+- **Schema changes are DbUp migrations** — numbered SQL scripts in `Api/Migrations/`
+  (`0002_AddSomething.sql`, …), embedded in the assembly and run in filename order on
+  startup by `DataAccess.DatabaseMigrator` (also in the integration and repository
+  tests). Applied scripts are recorded in the `SchemaVersions` table. **Never edit a
+  script once it has been deployed** — add a new one. Startup fails if a script fails,
+  so a bad migration fails the deploy's health check. SQLite's `ALTER TABLE` can only
+  add, rename and drop columns; changing a column's type or constraints needs a table
+  rebuild (create new table, copy rows, drop old, rename). `0001_InitialSchema.sql` is
+  the pre-DbUp baseline (`IF NOT EXISTS`, so a no-op on databases created before DbUp).
 - **Dates are stored/returned as UTC** regardless of server timezone (there's a
   regression test guarding this) — preserve that when touching the data layer.
 - SQLite persistence stores dates as ISO `"O"` and decimals with `InvariantCulture`.

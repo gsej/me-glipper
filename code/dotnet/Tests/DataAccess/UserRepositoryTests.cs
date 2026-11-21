@@ -12,6 +12,7 @@ public class UserRepositoryTests : IDisposable
 
     public UserRepositoryTests()
     {
+        DatabaseMigrator.Migrate($"Data Source={_dbPath}");
         _repository = new UserRepository($"Data Source={_dbPath}");
     }
 

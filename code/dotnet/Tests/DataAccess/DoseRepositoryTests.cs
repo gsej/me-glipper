@@ -13,6 +13,7 @@ public class DoseRepositoryTests : IDisposable
 
     public DoseRepositoryTests()
     {
+        DatabaseMigrator.Migrate($"Data Source={_dbPath}");
         _repository = new DoseRepository($"Data Source={_dbPath}");
     }
 

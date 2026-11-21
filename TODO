@@ -90,5 +90,7 @@ Other
 - DONE: update banner. When the service worker has a new version ready, a bar offers "Reload"
   (AppUpdateService + update-banner); it also checks for updates when the app returns to the
   foreground. settings.json is gone: UI git hash and API URL are build-time constants.
+- DONE: schema migrations via DbUp (Api/Migrations/*.sql, run on startup by
+  DatabaseMigrator, recorded in SchemaVersions). 0001_InitialSchema is the pre-DbUp baseline.
 - Medication list is hard-coded (Semaglutide, Tirzepatide, Retatrutide); dose unit fixed
   to mg. Revisit if this needs to be configurable.

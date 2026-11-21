@@ -68,6 +68,9 @@ public class Program
 
         var app = builder.Build();
 
+        // Bring the database schema up to date before serving any requests.
+        DataAccess.DatabaseMigrator.Migrate(app.Configuration["SqliteConnectionString"]!);
+
         // Validate the API key configuration at startup so a bad config fails the deploy
         // rather than the first request that hits an authenticated endpoint.
         app.Services.GetRequiredService<ApiKeyStore>();

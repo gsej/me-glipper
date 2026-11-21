@@ -10,20 +10,6 @@ namespace Api.DataAccess
         public UserRepository(string connectionString)
         {
             _connectionString = connectionString;
-            EnsureTablesExist();
-        }
-
-        private void EnsureTablesExist()
-        {
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
-            var command = connection.CreateCommand();
-            command.CommandText = """
-                CREATE TABLE IF NOT EXISTS Users (
-                    UserId TEXT NOT NULL PRIMARY KEY
-                )
-                """;
-            command.ExecuteNonQuery();
         }
 
         /// <summary>
