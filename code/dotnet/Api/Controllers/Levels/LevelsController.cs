@@ -22,11 +22,16 @@ public class LevelsController : ControllerBase
     private const double ForecastFraction = 0.25;
 
     private readonly DoseRepository _doseRepository;
+    private readonly MedicationRepository _medicationRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public LevelsController(DoseRepository doseRepository, IHttpContextAccessor httpContextAccessor)
+    public LevelsController(
+        DoseRepository doseRepository,
+        MedicationRepository medicationRepository,
+        IHttpContextAccessor httpContextAccessor)
     {
         _doseRepository = doseRepository;
+        _medicationRepository = medicationRepository;
         _httpContextAccessor = httpContextAccessor;
     }
 
@@ -69,31 +74,32 @@ public class LevelsController : ControllerBase
     /// <summary>
     /// When the next dose of each medication is due (last dose + its dosing interval). Only
     /// medications currently being taken are included: never-taken ones, and ones whose next
-    /// dose was due more than <see cref="DosingSchedules.NotCurrentAfterOverdue"/> ago, are left out.
+    /// dose was due more than <see cref="NextDoseRules.NotCurrentAfterOverdue"/> ago, are left out.
     /// </summary>
     [HttpGet("next-doses")]
     public async Task<NextDosesResponse> GetNextDoses()
     {
         var userId = (string)_httpContextAccessor.HttpContext!.Items[ApiKeyAuthFilter.UserIdKeyname]!;
         var entities = await _doseRepository.GetAllAsync(userId);
+        var medications = await _medicationRepository.GetAllAsync();
         var now = DateTime.UtcNow;
 
         var nextDoses = new List<NextDose>();
-        foreach (var schedule in DosingSchedules.All)
+        foreach (var medication in medications)
         {
             var last = entities
-                .Where(e => string.Equals(e.MedicationName, schedule.MedicationName, StringComparison.OrdinalIgnoreCase))
+                .Where(e => e.MedicationId == medication.MedicationId)
                 .MaxBy(e => e.TakenAt);
             if (last is null)
                 continue;
 
-            var nextDueAt = DosingSchedules.NextDueAt(last.TakenAt, schedule);
-            if (!DosingSchedules.IsCurrent(nextDueAt, now))
+            var nextDueAt = NextDoseRules.NextDueAt(last.TakenAt, medication.DefaultDosingIntervalDays);
+            if (!NextDoseRules.IsCurrent(nextDueAt, now))
                 continue;
 
             nextDoses.Add(new NextDose(
-                schedule.MedicationName,
-                schedule.IntervalDays,
+                medication.Name,
+                medication.DefaultDosingIntervalDays,
                 last.TakenAt,
                 (double)last.DoseAmountMg,
                 nextDueAt));
@@ -103,19 +109,23 @@ public class LevelsController : ControllerBase
     }
 
     /// <summary>
-    /// The presets the current user has actually dosed, paired with those doses. Drugs with no
-    /// doses are excluded (no zero rows / empty series for untaken medications).
+    /// The medications the current user has actually dosed (in display order), as calculator
+    /// parameters paired with those doses. Medications with no doses are excluded (no zero rows /
+    /// empty series for untaken medications).
     /// </summary>
     private async Task<IReadOnlyList<(DrugParameters Drug, List<DoseInput> Doses)>> GetDosedDrugsAsync()
     {
         var userId = (string)_httpContextAccessor.HttpContext!.Items[ApiKeyAuthFilter.UserIdKeyname]!;
         var entities = await _doseRepository.GetAllAsync(userId);
+        var medications = await _medicationRepository.GetAllAsync();
 
-        return DrugPresets.All
-            .Select(drug => (Drug: drug, Doses: entities
-                .Where(e => string.Equals(e.MedicationName, drug.Name, StringComparison.OrdinalIgnoreCase))
-                .Select(e => new DoseInput(e.TakenAt, (double)e.DoseAmountMg))
-                .ToList()))
+        return medications
+            .Select(m => (
+                Drug: new DrugParameters(m.Name, m.HalfLifeHours, m.Bioavailability, m.TmaxHours),
+                Doses: entities
+                    .Where(e => e.MedicationId == m.MedicationId)
+                    .Select(e => new DoseInput(e.TakenAt, (double)e.DoseAmountMg))
+                    .ToList()))
             .Where(x => x.Doses.Count > 0)
             .ToList();
     }

@@ -13,7 +13,7 @@ public static class DatabaseMigrator
     public static void Migrate(string connectionString)
     {
         var upgrader = DeployChanges.To
-            .SqliteDatabase(connectionString)
+            .SqliteDatabase(ConnectionStrings.WithForeignKeys(connectionString))
             .WithScriptsEmbeddedInAssembly(
                 typeof(DatabaseMigrator).Assembly,
                 name => name.Contains(".Migrations.") && name.EndsWith(".sql"))

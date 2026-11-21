@@ -13,11 +13,16 @@ namespace Api.Controllers;
 public class DoseController : ControllerBase
 {
     private readonly DataAccess.DoseRepository _doseRepository;
+    private readonly DataAccess.MedicationRepository _medicationRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public DoseController(DataAccess.DoseRepository doseRepository, IHttpContextAccessor httpContextAccessor)
+    public DoseController(
+        DataAccess.DoseRepository doseRepository,
+        DataAccess.MedicationRepository medicationRepository,
+        IHttpContextAccessor httpContextAccessor)
     {
         _doseRepository = doseRepository;
+        _medicationRepository = medicationRepository;
         _httpContextAccessor = httpContextAccessor;
     }
 
@@ -60,9 +65,15 @@ public class DoseController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> PostDoseRecord([FromBody] CreateDoseRequest request)
     {
+        var medication = await _medicationRepository.GetByNameAsync(request.MedicationName);
+        if (medication == null)
+        {
+            return BadRequest($"Unknown medication '{request.MedicationName}'.");
+        }
+
         var doseId = Guid.NewGuid();
         var userId = (string)_httpContextAccessor.HttpContext!.Items[ApiKeyAuthFilter.UserIdKeyname]!;
-        var entity = new DoseEntity(doseId, userId, request.TakenAt, request.MedicationName, request.DoseAmountMg, false, request.Notes);
+        var entity = new DoseEntity(doseId, userId, request.TakenAt, medication.MedicationId, request.DoseAmountMg, false, request.Notes);
         await _doseRepository.AddAsync(entity);
         Response.Headers.Append("Location", $"/api/dose/{doseId}");
         return CreatedAtAction(nameof(GetDoseRecord), new { doseId }, null);

@@ -6,12 +6,12 @@ public class DoseEntity
     {
     }
 
-    public DoseEntity(Guid doseId, string userId, DateTime takenAt, string medicationName, decimal doseAmountMg, bool deleted, string? notes = null)
+    public DoseEntity(Guid doseId, string userId, DateTime takenAt, int medicationId, decimal doseAmountMg, bool deleted, string? notes = null)
     {
         DoseId = doseId;
         UserId = userId;
         TakenAt = takenAt;
-        MedicationName = medicationName;
+        MedicationId = medicationId;
         DoseAmountMg = doseAmountMg;
         Deleted = deleted;
         Notes = notes;
@@ -25,7 +25,13 @@ public class DoseEntity
 
     public bool Deleted { get; set; } = false;
 
-    public string MedicationName { get; set; } = null!;
+    public int MedicationId { get; set; }
+
+    /// <summary>
+    /// The medication's name, as stored in Medications. Filled in by the repository when a dose
+    /// is read; not written (doses refer to their medication by <see cref="MedicationId"/>).
+    /// </summary>
+    public string MedicationName { get; set; } = "";
 
     public decimal DoseAmountMg { get; set; }
 

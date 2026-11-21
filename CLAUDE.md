@@ -71,6 +71,13 @@ The service worker is off in `ng serve`, so the banner never shows in local dev.
 
 ## Domain / API notes
 
+- **Medications are reference data** in the `Medications` table, seeded and changed only
+  by migrations (not editable from the app, not in backups). Doses refer to them by
+  `MedicationId` (a foreign key); the API and backup JSON use the medication's **name**,
+  resolved server-side ignoring case, and an unknown name is a `400`. Foreign keys are
+  enforced because every repository adds `Foreign Keys=True` to its connection string
+  (`ConnectionStrings.WithForeignKeys`). Values, sources and how to change them:
+  `docs/medications.md`.
 - **API-key auth** via the `X-API-Key` header (`ApiKeyAuthFilter`); keys come from
   the `ApiKeys` config value. Every request is scoped to the key's `UserId`.
 - **Per-user isolation** is a real invariant — repositories filter by `userId`;

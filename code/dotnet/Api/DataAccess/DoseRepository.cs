@@ -6,11 +6,16 @@ namespace Api.DataAccess
 {
     public class DoseRepository
     {
+        // Joins Medications so each dose comes back with its medication's name.
+        private const string SelectDoses =
+            "SELECT d.DoseId, d.UserId, d.TakenAt, d.MedicationId, m.Name, d.DoseAmountMg, d.Deleted, d.Notes " +
+            "FROM Doses d JOIN Medications m ON m.MedicationId = d.MedicationId";
+
         private readonly string _connectionString;
 
         public DoseRepository(string connectionString)
         {
-            _connectionString = connectionString;
+            _connectionString = ConnectionStrings.WithForeignKeys(connectionString);
         }
 
         /// <summary>
@@ -21,7 +26,7 @@ namespace Api.DataAccess
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT DoseId, UserId, TakenAt, MedicationName, DoseAmountMg, Deleted, Notes FROM Doses WHERE UserId = $userId AND Deleted = 0";
+            command.CommandText = $"{SelectDoses} WHERE d.UserId = $userId AND d.Deleted = 0";
             command.Parameters.AddWithValue("$userId", userId);
 
             var results = new List<DoseEntity>();
@@ -41,7 +46,7 @@ namespace Api.DataAccess
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT DoseId, UserId, TakenAt, MedicationName, DoseAmountMg, Deleted, Notes FROM Doses";
+            command.CommandText = SelectDoses;
 
             var results = new List<DoseEntity>();
             using var reader = await command.ExecuteReaderAsync();
@@ -57,7 +62,7 @@ namespace Api.DataAccess
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT DoseId, UserId, TakenAt, MedicationName, DoseAmountMg, Deleted, Notes FROM Doses WHERE DoseId = $doseId AND UserId = $userId AND Deleted = 0";
+            command.CommandText = $"{SelectDoses} WHERE d.DoseId = $doseId AND d.UserId = $userId AND d.Deleted = 0";
             command.Parameters.AddWithValue("$doseId", doseId.ToString());
             command.Parameters.AddWithValue("$userId", userId);
 
@@ -74,11 +79,11 @@ namespace Api.DataAccess
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = "INSERT INTO Doses (DoseId, UserId, TakenAt, MedicationName, DoseAmountMg, Deleted, Notes) VALUES ($doseId, $userId, $takenAt, $medicationName, $doseAmountMg, $deleted, $notes)";
+            command.CommandText = "INSERT INTO Doses (DoseId, UserId, TakenAt, MedicationId, DoseAmountMg, Deleted, Notes) VALUES ($doseId, $userId, $takenAt, $medicationId, $doseAmountMg, $deleted, $notes)";
             command.Parameters.AddWithValue("$doseId", entity.DoseId.ToString());
             command.Parameters.AddWithValue("$userId", entity.UserId);
             command.Parameters.AddWithValue("$takenAt", ToUtc(entity.TakenAt).ToString("O"));
-            command.Parameters.AddWithValue("$medicationName", entity.MedicationName);
+            command.Parameters.AddWithValue("$medicationId", entity.MedicationId);
             command.Parameters.AddWithValue("$doseAmountMg", entity.DoseAmountMg.ToString(CultureInfo.InvariantCulture));
             command.Parameters.AddWithValue("$deleted", entity.Deleted ? 1 : 0);
             command.Parameters.AddWithValue("$notes", (object?)NormaliseNotes(entity.Notes) ?? DBNull.Value);
@@ -90,9 +95,9 @@ namespace Api.DataAccess
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = "UPDATE Doses SET TakenAt = $takenAt, MedicationName = $medicationName, DoseAmountMg = $doseAmountMg, Deleted = $deleted, Notes = $notes WHERE DoseId = $doseId";
+            command.CommandText = "UPDATE Doses SET TakenAt = $takenAt, MedicationId = $medicationId, DoseAmountMg = $doseAmountMg, Deleted = $deleted, Notes = $notes WHERE DoseId = $doseId";
             command.Parameters.AddWithValue("$takenAt", ToUtc(entity.TakenAt).ToString("O"));
-            command.Parameters.AddWithValue("$medicationName", entity.MedicationName);
+            command.Parameters.AddWithValue("$medicationId", entity.MedicationId);
             command.Parameters.AddWithValue("$doseAmountMg", entity.DoseAmountMg.ToString(CultureInfo.InvariantCulture));
             command.Parameters.AddWithValue("$deleted", entity.Deleted ? 1 : 0);
             command.Parameters.AddWithValue("$notes", (object?)NormaliseNotes(entity.Notes) ?? DBNull.Value);
@@ -122,11 +127,14 @@ namespace Api.DataAccess
                 Guid.Parse(reader.GetString(0)),
                 reader.GetString(1),
                 ToUtc(DateTime.Parse(reader.GetString(2), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind)),
-                reader.GetString(3),
-                decimal.Parse(reader.GetString(4), CultureInfo.InvariantCulture),
-                reader.GetInt32(5) != 0,
-                reader.IsDBNull(6) ? null : reader.GetString(6)
-            );
+                reader.GetInt32(3),
+                decimal.Parse(reader.GetString(5), CultureInfo.InvariantCulture),
+                reader.GetInt32(6) != 0,
+                reader.IsDBNull(7) ? null : reader.GetString(7)
+            )
+            {
+                MedicationName = reader.GetString(4),
+            };
         }
 
         /// <summary>

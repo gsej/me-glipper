@@ -27,7 +27,7 @@ public class DoseRepositoryTests : IDisposable
     {
         var id = Guid.NewGuid();
         var takenAt = new DateTime(2025, 1, 15, 6, 30, 0, DateTimeKind.Utc);
-        await _repository.AddAsync(new DoseEntity(id, "alice", takenAt, "Semaglutide", 1.0m, false));
+        await _repository.AddAsync(new DoseEntity(id, "alice", takenAt, TestMedications.SemaglutideId, 1.0m, false));
 
         var loaded = await _repository.GetByIdAsync(id, "alice");
 
@@ -48,9 +48,9 @@ public class DoseRepositoryTests : IDisposable
     {
         // The parameterless overload backs the backup endpoint, which must read everything:
         // all users, including soft-deleted rows.
-        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 1), "Semaglutide", 1.0m, false));
-        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 2), "Semaglutide", 1.0m, true));
-        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "bob", new DateTime(2025, 1, 3), "Tirzepatide", 2.5m, false));
+        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 1), TestMedications.SemaglutideId, 1.0m, false));
+        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 2), TestMedications.SemaglutideId, 1.0m, true));
+        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "bob", new DateTime(2025, 1, 3), TestMedications.TirzepatideId, 2.5m, false));
 
         var all = (await _repository.GetAllAsync()).ToList();
 
@@ -66,7 +66,7 @@ public class DoseRepositoryTests : IDisposable
         // enforcing the "dates as UTC regardless of server timezone" invariant.
         var id = Guid.NewGuid();
         var unspecified = new DateTime(2025, 1, 15, 6, 30, 0, DateTimeKind.Unspecified);
-        await _repository.AddAsync(new DoseEntity(id, "alice", unspecified, "Semaglutide", 1.0m, false));
+        await _repository.AddAsync(new DoseEntity(id, "alice", unspecified, TestMedications.SemaglutideId, 1.0m, false));
 
         var loaded = await _repository.GetByIdAsync(id, "alice");
 
@@ -80,7 +80,7 @@ public class DoseRepositoryTests : IDisposable
         // A Local-kind date is converted (not just relabelled) to the equivalent UTC instant.
         var id = Guid.NewGuid();
         var local = new DateTime(2025, 1, 15, 6, 30, 0, DateTimeKind.Local);
-        await _repository.AddAsync(new DoseEntity(id, "alice", local, "Semaglutide", 1.0m, false));
+        await _repository.AddAsync(new DoseEntity(id, "alice", local, TestMedications.SemaglutideId, 1.0m, false));
 
         var loaded = await _repository.GetByIdAsync(id, "alice");
 
@@ -92,7 +92,7 @@ public class DoseRepositoryTests : IDisposable
     public async Task GetByIdAsync_DoesNotReturnAnotherUsersRecord()
     {
         var id = Guid.NewGuid();
-        await _repository.AddAsync(new DoseEntity(id, "alice", new DateTime(2025, 1, 15), "Semaglutide", 1.0m, false));
+        await _repository.AddAsync(new DoseEntity(id, "alice", new DateTime(2025, 1, 15), TestMedications.SemaglutideId, 1.0m, false));
 
         var asBob = await _repository.GetByIdAsync(id, "bob");
 
@@ -102,9 +102,9 @@ public class DoseRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllAsync_FiltersByUserAndExcludesDeleted()
     {
-        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 1), "Semaglutide", 1.0m, false));
-        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 2), "Semaglutide", 1.0m, true));
-        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "bob", new DateTime(2025, 1, 3), "Tirzepatide", 2.5m, false));
+        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 1), TestMedications.SemaglutideId, 1.0m, false));
+        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 2), TestMedications.SemaglutideId, 1.0m, true));
+        await _repository.AddAsync(new DoseEntity(Guid.NewGuid(), "bob", new DateTime(2025, 1, 3), TestMedications.TirzepatideId, 2.5m, false));
 
         var aliceRecords = (await _repository.GetAllAsync("alice")).ToList();
 
@@ -116,7 +116,7 @@ public class DoseRepositoryTests : IDisposable
     public async Task DeleteAsync_SoftDeletes_RowRemainsButIsExcludedFromReads()
     {
         var id = Guid.NewGuid();
-        var entity = new DoseEntity(id, "alice", new DateTime(2025, 1, 15), "Semaglutide", 1.0m, false);
+        var entity = new DoseEntity(id, "alice", new DateTime(2025, 1, 15), TestMedications.SemaglutideId, 1.0m, false);
         await _repository.AddAsync(entity);
 
         await _repository.DeleteAsync(entity);
@@ -132,7 +132,7 @@ public class DoseRepositoryTests : IDisposable
     public async Task HardDeleteAsync_RemovesTheRowEntirely()
     {
         var id = Guid.NewGuid();
-        var entity = new DoseEntity(id, "alice", new DateTime(2025, 1, 15), "Semaglutide", 1.0m, false);
+        var entity = new DoseEntity(id, "alice", new DateTime(2025, 1, 15), TestMedications.SemaglutideId, 1.0m, false);
         await _repository.AddAsync(entity);
 
         await _repository.HardDeleteAsync(entity);
@@ -145,7 +145,7 @@ public class DoseRepositoryTests : IDisposable
     {
         var id = Guid.NewGuid();
         await _repository.AddAsync(
-            new DoseEntity(id, "alice", new DateTime(2025, 1, 15), "Semaglutide", 1.0m, false, "first dose of the week"));
+            new DoseEntity(id, "alice", new DateTime(2025, 1, 15), TestMedications.SemaglutideId, 1.0m, false, "first dose of the week"));
 
         var loaded = await _repository.GetByIdAsync(id, "alice");
 
@@ -160,7 +160,7 @@ public class DoseRepositoryTests : IDisposable
     {
         var id = Guid.NewGuid();
         await _repository.AddAsync(
-            new DoseEntity(id, "alice", new DateTime(2025, 1, 15), "Semaglutide", 1.0m, false, notes));
+            new DoseEntity(id, "alice", new DateTime(2025, 1, 15), TestMedications.SemaglutideId, 1.0m, false, notes));
 
         var loaded = await _repository.GetByIdAsync(id, "alice");
 
@@ -172,7 +172,7 @@ public class DoseRepositoryTests : IDisposable
     {
         var id = Guid.NewGuid();
         await _repository.AddAsync(
-            new DoseEntity(id, "alice", new DateTime(2025, 1, 15), "Semaglutide", 1.0m, false, "  felt fine  "));
+            new DoseEntity(id, "alice", new DateTime(2025, 1, 15), TestMedications.SemaglutideId, 1.0m, false, "  felt fine  "));
 
         var loaded = await _repository.GetByIdAsync(id, "alice");
 
@@ -183,7 +183,7 @@ public class DoseRepositoryTests : IDisposable
     public async Task UpdateAsync_SetsAndClearsTheNotes()
     {
         var id = Guid.NewGuid();
-        var entity = new DoseEntity(id, "alice", new DateTime(2025, 1, 15), "Semaglutide", 1.0m, false);
+        var entity = new DoseEntity(id, "alice", new DateTime(2025, 1, 15), TestMedications.SemaglutideId, 1.0m, false);
         await _repository.AddAsync(entity);
 
         entity.Notes = "mild nausea";
@@ -193,5 +193,15 @@ public class DoseRepositoryTests : IDisposable
         entity.Notes = null;
         await _repository.UpdateAsync(entity);
         (await _repository.GetByIdAsync(id, "alice"))!.Notes.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task AddAsync_WithAnUnknownMedicationId_IsRejectedByTheForeignKey()
+    {
+        var act = () => _repository.AddAsync(
+            new DoseEntity(Guid.NewGuid(), "alice", new DateTime(2025, 1, 15), 999, 1.0m, false));
+
+        await act.Should().ThrowAsync<Microsoft.Data.Sqlite.SqliteException>()
+            .WithMessage("*FOREIGN KEY constraint failed*");
     }
 }

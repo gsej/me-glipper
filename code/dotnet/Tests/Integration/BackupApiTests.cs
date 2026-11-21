@@ -109,4 +109,29 @@ public class BackupApiTests : IDisposable
         backup!.DoseRecords!.Should().HaveCount(2);
         backup.DoseRecords!.Should().Contain(r => r.Deleted);
     }
+
+    [Fact]
+    public async Task Restore_WithAnUnknownMedication_ReturnsBadRequestAndKeepsTheExistingData()
+    {
+        var client = _factory.CreateClientWithKey(ApiTestFactory.AliceKey);
+        await client.PostAsJsonAsync("/api/backup/restore", new Backup(
+            new[] { new User(ApiTestFactory.AliceUserId) },
+            new[]
+            {
+                new DoseRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 1), "Semaglutide", 1.0m, false),
+            }));
+
+        var response = await client.PostAsJsonAsync("/api/backup/restore", new Backup(
+            new[] { new User(ApiTestFactory.AliceUserId) },
+            new[]
+            {
+                new DoseRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 2, 1), "Tirzepatide", 2.5m, false),
+                new DoseRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 2, 2), "Ozempic", 1.0m, false),
+            }));
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("Ozempic");
+        var backup = await client.GetFromJsonAsync<Backup>("/api/backup");
+        backup!.DoseRecords!.Should().ContainSingle(r => r.MedicationName == "Semaglutide");
+    }
 }

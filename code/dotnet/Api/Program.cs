@@ -66,6 +66,13 @@ public class Program
             return new DataAccess.UserRepository(connectionString!);
         });
 
+        builder.Services.AddScoped<DataAccess.MedicationRepository>(sp =>
+        {
+            var configuration = sp.GetRequiredService<IConfiguration>();
+            var connectionString = configuration["SqliteConnectionString"];
+            return new DataAccess.MedicationRepository(connectionString!);
+        });
+
         var app = builder.Build();
 
         // Bring the database schema up to date before serving any requests.

@@ -12,11 +12,16 @@ public class BackupController : ControllerBase
 {
     private readonly UserRepository _userRepository;
     private readonly DoseRepository _doseRepository;
+    private readonly MedicationRepository _medicationRepository;
 
-    public BackupController(UserRepository userRepository, DoseRepository doseRepository)
+    public BackupController(
+        UserRepository userRepository,
+        DoseRepository doseRepository,
+        MedicationRepository medicationRepository)
     {
         _userRepository = userRepository;
         _doseRepository = doseRepository;
+        _medicationRepository = medicationRepository;
     }
 
     [HttpGet]
@@ -46,6 +51,18 @@ public class BackupController : ControllerBase
         if (backup?.Users == null || backup.DoseRecords == null)
             return BadRequest("No records provided");
 
+        // Backups name each dose's medication; resolve the names to ids before wiping
+        // anything, so a backup with an unknown medication leaves the database untouched.
+        var medicationIds = (await _medicationRepository.GetAllAsync())
+            .ToDictionary(m => m.Name, m => m.MedicationId, StringComparer.OrdinalIgnoreCase);
+        var unknown = backup.DoseRecords
+            .Select(d => d.MedicationName)
+            .Where(name => !medicationIds.ContainsKey(name))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (unknown.Count > 0)
+            return BadRequest($"Unknown medication(s): {string.Join(", ", unknown)}.");
+
         // Wipe everything, then re-insert users before doses.
         foreach (var entity in await _doseRepository.GetAllAsync())
         {
@@ -66,7 +83,7 @@ public class BackupController : ControllerBase
                 doseRecord.DoseId == Guid.Empty ? Guid.NewGuid() : doseRecord.DoseId,
                 doseRecord.UserId,
                 doseRecord.TakenAt,
-                doseRecord.MedicationName,
+                medicationIds[doseRecord.MedicationName],
                 doseRecord.DoseAmountMg,
                 doseRecord.Deleted,
                 doseRecord.Notes));

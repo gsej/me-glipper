@@ -92,5 +92,11 @@ Other
   foreground. settings.json is gone: UI git hash and API URL are build-time constants.
 - DONE: schema migrations via DbUp (Api/Migrations/*.sql, run on startup by
   DatabaseMigrator, recorded in SchemaVersions). 0001_InitialSchema is the pre-DbUp baseline.
-- Medication list is hard-coded (Semaglutide, Tirzepatide, Retatrutide); dose unit fixed
-  to mg. Revisit if this needs to be configurable.
+- DONE: medications table (migration 0002), seeded with Semaglutide, Tirzepatide and
+  Retatrutide: default dosing interval, PK parameters, chart colour, display order. Doses refer
+  to medications by MedicationId (0003, foreign key); the API and backups still use names, and
+  unknown names are rejected. DrugPresets / DosingSchedules are gone (NextDoseRules keeps the
+  next-dose rules). GET /api/medications. Sources for the values: docs/medications.md.
+  Not editable from the app. Dose unit is fixed to mg.
+- NEXT: frontend reads GET /api/medications for the dose-input dropdown and chart colours
+  (both still hardcoded in the frontend).

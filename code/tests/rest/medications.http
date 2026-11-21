@@ -1,0 +1,6 @@
+
+@baseUrl = http://localhost:5200/api
+
+### Get the medications (name, default dosing interval, PK parameters, chart colour), in display order
+GET {{baseUrl}}/medications
+X-Api-Key: apikey

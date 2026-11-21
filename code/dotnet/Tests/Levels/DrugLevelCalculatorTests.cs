@@ -218,38 +218,4 @@ public class DrugLevelCalculatorTests
 
         act.Should().NotThrow();
     }
-
-    [Fact]
-    public void SemaglutidePreset_HasExpectedParameters()
-    {
-        DrugPresets.Semaglutide.Name.Should().Be("Semaglutide");
-        DrugPresets.Semaglutide.HalfLifeHours.Should().Be(165);
-        DrugPresets.Semaglutide.Bioavailability.Should().Be(0.89);
-        DrugPresets.Semaglutide.TmaxHours.Should().Be(48);
-    }
-
-    [Fact]
-    public void TirzepatidePreset_HasExpectedParameters()
-    {
-        DrugPresets.Tirzepatide.Name.Should().Be("Tirzepatide");
-        DrugPresets.Tirzepatide.HalfLifeHours.Should().Be(117);
-        DrugPresets.Tirzepatide.Bioavailability.Should().Be(0.80);
-        DrugPresets.Tirzepatide.TmaxHours.Should().Be(24);
-    }
-
-    [Fact]
-    public void RetatrutidePreset_HasExpectedParameters()
-    {
-        DrugPresets.Retatrutide.Name.Should().Be("Retatrutide");
-        DrugPresets.Retatrutide.HalfLifeHours.Should().Be(144);
-        DrugPresets.Retatrutide.Bioavailability.Should().Be(1.0);
-        DrugPresets.Retatrutide.TmaxHours.Should().Be(36);
-    }
-
-    [Fact]
-    public void All_ListsTheThreePresetsInOrder()
-    {
-        DrugPresets.All.Select(d => d.Name)
-            .Should().Equal("Semaglutide", "Tirzepatide", "Retatrutide");
-    }
 }

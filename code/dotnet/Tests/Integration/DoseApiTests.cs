@@ -56,6 +56,32 @@ public class DoseApiTests : IDisposable
     }
 
     [Fact]
+    public async Task Post_WithAnUnknownMedication_ReturnsBadRequestAndSavesNothing()
+    {
+        var client = _factory.CreateClientWithKey(ApiTestFactory.AliceKey);
+
+        var post = await client.PostAsJsonAsync("/api/dose",
+            new CreateDoseRequest(new DateTime(2025, 1, 15), "Semaglutid", 1.0m));
+
+        post.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var collection = await client.GetFromJsonAsync<DosesCollection>("/api/doses");
+        collection!.DoseRecords!.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Post_MatchesTheMedicationIgnoringCase_AndReturnsItsStoredName()
+    {
+        var client = _factory.CreateClientWithKey(ApiTestFactory.AliceKey);
+
+        var post = await client.PostAsJsonAsync("/api/dose",
+            new CreateDoseRequest(new DateTime(2025, 1, 15), "semaglutide", 1.0m));
+
+        post.StatusCode.Should().Be(HttpStatusCode.Created);
+        var collection = await client.GetFromJsonAsync<DosesCollection>("/api/doses");
+        collection!.DoseRecords!.Single().MedicationName.Should().Be("Semaglutide");
+    }
+
+    [Fact]
     public async Task Doses_AreScopedPerUser()
     {
         var alice = _factory.CreateClientWithKey(ApiTestFactory.AliceKey);
