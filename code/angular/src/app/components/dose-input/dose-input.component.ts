@@ -7,6 +7,7 @@ import {
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DoseService } from '../../services/dose.service';
+import { MedicationService } from '../../services/medication.service';
 
 @Component({
   selector: 'app-dose-input',
@@ -16,8 +17,9 @@ import { DoseService } from '../../services/dose.service';
   imports: [CommonModule, ReactiveFormsModule],
 })
 export class DoseInputComponent {
-  // Hard-coded for now; will likely become user-configurable in a later slice.
-  readonly medications = ['Semaglutide', 'Tirzepatide', 'Retatrutide'];
+  // Medication names for the dropdown, in display order (from the API).
+  medications: string[] = [];
+  medicationsError = false;
 
   doseForm: FormGroup;
   status: string | null = null;
@@ -28,7 +30,16 @@ export class DoseInputComponent {
   constructor(
     private fb: FormBuilder,
     private doseService: DoseService,
+    medicationService: MedicationService,
   ) {
+    medicationService.getMedications().subscribe({
+      next: (medications) => (this.medications = medications.map((m) => m.name)),
+      error: (error) => {
+        console.error('Error fetching medications:', error);
+        this.medicationsError = true;
+      },
+    });
+
     const now = new Date();
     this.doseForm = this.fb.group({
       date: [this.toDateInput(now), [Validators.required]],

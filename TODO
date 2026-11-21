@@ -98,5 +98,6 @@ Other
   unknown names are rejected. DrugPresets / DosingSchedules are gone (NextDoseRules keeps the
   next-dose rules). GET /api/medications. Sources for the values: docs/medications.md.
   Not editable from the app. Dose unit is fixed to mg.
-- NEXT: frontend reads GET /api/medications for the dose-input dropdown and chart colours
-  (both still hardcoded in the frontend).
+- DONE: the frontend reads GET /api/medications (MedicationService, fetched once and cached)
+  for the dose-input dropdown and the chart colours; nothing medication-specific is hardcoded
+  in the frontend any more.

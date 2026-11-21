@@ -39,6 +39,9 @@
           <option [value]="medication">{{ medication }}</option>
         }
       </select>
+      @if (medicationsError) {
+        <div class="text-sm text-red-500 mt-1">Couldn't load the medication list</div>
+      }
     </div>
 
     <!-- Dose amount -->

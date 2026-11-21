@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, forkJoin, of } from 'rxjs';
 import {
   DrugLevelChartComponent,
   PLOT_LEFT_PX,
@@ -11,6 +12,7 @@ import {
   LevelsService,
 } from '../../services/levels.service';
 import { DoseService } from '../../services/dose.service';
+import { MedicationService } from '../../services/medication.service';
 
 /** Headroom above a drug's all-time peak, so the line doesn't touch the top of the chart. */
 const Y_HEADROOM = 1.05;
@@ -37,6 +39,7 @@ interface ChartSeries extends DrugLevelSeries {
 export class DrugLevelsChartsComponent implements OnInit {
   private readonly levelsService = inject(LevelsService);
   private readonly doseService = inject(DoseService);
+  private readonly medicationService = inject(MedicationService);
 
   times: string[] = [];
   /** Active drugs first (API order), then cleared drugs, most recently cleared first. */
@@ -58,11 +61,8 @@ export class DrugLevelsChartsComponent implements OnInit {
     { label: 'All', days: null },
   ];
 
-  private readonly colors: Record<string, string> = {
-    Semaglutide: '#3b82f6', // blue-500
-    Tirzepatide: '#10b981', // emerald-500
-    Retatrutide: '#8b5cf6', // violet-500
-  };
+  /** Chart colour per medication name, from the API's medications. */
+  private colors: Record<string, string> = {};
 
   constructor() {
     // Reload whenever a dose is added or deleted elsewhere in the app.
@@ -76,8 +76,13 @@ export class DrugLevelsChartsComponent implements OnInit {
   load(): void {
     this.isLoading = true;
     this.error = null;
-    this.levelsService.getSeries().subscribe({
-      next: (response) => {
+    forkJoin({
+      response: this.levelsService.getSeries(),
+      // Colours are cosmetic: if the medications can't be fetched, still draw the charts (grey).
+      medications: this.medicationService.getMedications().pipe(catchError(() => of([]))),
+    }).subscribe({
+      next: ({ response, medications }) => {
+        this.colors = Object.fromEntries(medications.map((m) => [m.name, m.chartColor]));
         this.times = response.times;
         this.nowSecs = Math.floor(new Date(response.now).getTime() / 1000);
         this.series = this.prepareSeries(response.times, response.series);

@@ -43,7 +43,7 @@ export interface NextDose {
 }
 
 export interface NextDosesResponse {
-  // Only medications currently being taken (see the API's DosingSchedules).
+  // Only medications currently being taken (see the API's NextDoseRules).
   nextDoses: NextDose[];
 }
 
