@@ -10,7 +10,7 @@ X-Api-Key: apikey
 
 {
   "users": [
-    { "userId": "ApiUser", "heightInCm": 150 }
+    { "userId": "ApiUser" }
   ],
   "doseRecords": [
     {

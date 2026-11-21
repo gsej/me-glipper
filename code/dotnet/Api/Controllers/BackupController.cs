@@ -23,7 +23,7 @@ public class BackupController : ControllerBase
     public async Task<Backup> GetBackup()
     {
         var users = (await _userRepository.GetAllAsync())
-            .Select(entity => new User(entity.UserId, entity.HeightInCm));
+            .Select(entity => new User(entity.UserId));
 
         var doseRecords = (await _doseRepository.GetAllAsync())
             .Select(entity => new DoseRecord(
@@ -58,7 +58,7 @@ public class BackupController : ControllerBase
 
         foreach (var user in backup.Users)
         {
-            await _userRepository.AddAsync(new UserEntity(user.UserId, user.heightInCm));
+            await _userRepository.AddAsync(new UserEntity(user.UserId));
         }
         foreach (var doseRecord in backup.DoseRecords)
         {

@@ -6,13 +6,13 @@ gotchas that aren't obvious from the code.
 
 ## What this is
 
-A GLP-1 dose tracking app. It was forked from a weight-tracking app (`me-tracker`)
-and is being rebuilt to record GLP-1 doses (date, dose amount, medication name,
-delivery method, notes, etc.) per user. GLP-1 medications may be injected or
-taken orally, so "dose" is the preferred domain term — not "injection". The
-structure and tooling are inherited from the original app — treat it as
-production software. Clean, reusable patterns (test scaffolding, clear layering)
-are valued.
+A GLP-1 dose tracking app, forked from a weight-tracking app (`me-tracker`). It
+records doses per user (time taken, medication, amount in mg, notes), estimates
+how much of each drug remains in the body (numbers and charts), and shows when the
+next dose is due. GLP-1 medications may be injected or taken orally, so "dose" is
+the preferred domain term — not "injection". The structure and tooling are
+inherited from the original app — treat it as production software. Clean,
+reusable patterns (test scaffolding, clear layering) are valued.
 
 ## Layout
 
@@ -34,7 +34,7 @@ are valued.
 Backend (from `code/dotnet/`):
 ```bash
 dotnet build
-dotnet test                     # xUnit; 52 tests
+dotnet test                     # xUnit
 dotnet run --project Api        # local API on http://localhost:5200
 ```
 
@@ -83,16 +83,14 @@ The service worker is off in `ng serve`, so the banner never shows in local dev.
   repository. Set it on create, or edit it later via `PUT /api/dose/{id}`. Use the
   name **`Notes`** consistently (entity/column/request/API/service/UI) — never `Comment`.
 - **Tables are created from code, not a migration framework** —
-  `DoseRepository.EnsureTablesExist` runs `CREATE TABLE IF NOT EXISTS` with the full
-  schema on startup. There is no support for migrating a pre-existing database to a new
-  shape; a schema change means dropping/recreating the local dev DB (and restoring the
-  single prod instance from a backup). Add new columns to the `CREATE TABLE` directly.
+  `DoseRepository` and `UserRepository` each run `CREATE TABLE IF NOT EXISTS` with the
+  full schema on startup (`EnsureTablesExist`). There is no support for migrating a
+  pre-existing database to a new shape; a schema change means dropping/recreating the
+  local dev DB (and restoring the single prod instance from a backup). Add new columns
+  to the `CREATE TABLE` directly.
 - **Dates are stored/returned as UTC** regardless of server timezone (there's a
   regression test guarding this) — preserve that when touching the data layer.
 - SQLite persistence stores dates as ISO `"O"` and decimals with `InvariantCulture`.
-- The core domain entity is a **dose** — covering any GLP-1 delivery method
-  (injection or oral). The term "weight" and weight-specific fields will be
-  removed as part of the rename refactor.
 
 ## Conventions
 

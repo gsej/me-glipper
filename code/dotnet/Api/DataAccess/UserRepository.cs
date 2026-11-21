@@ -20,8 +20,7 @@ namespace Api.DataAccess
             var command = connection.CreateCommand();
             command.CommandText = """
                 CREATE TABLE IF NOT EXISTS Users (
-                    UserId TEXT NOT NULL PRIMARY KEY,
-                    HeightInCm INTEGER NOT NULL
+                    UserId TEXT NOT NULL PRIMARY KEY
                 )
                 """;
             command.ExecuteNonQuery();
@@ -35,13 +34,13 @@ namespace Api.DataAccess
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT UserId, HeightInCm FROM Users";
+            command.CommandText = "SELECT UserId FROM Users";
 
             var results = new List<UserEntity>();
             using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                results.Add(new UserEntity(reader.GetString(0), reader.GetInt32(1)));
+                results.Add(new UserEntity(reader.GetString(0)));
             }
             return results;
         }
@@ -51,13 +50,13 @@ namespace Api.DataAccess
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT UserId, HeightInCm FROM Users WHERE UserId = $userId";
+            command.CommandText = "SELECT UserId FROM Users WHERE UserId = $userId";
             command.Parameters.AddWithValue("$userId", userId);
 
             using var reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                return new UserEntity(reader.GetString(0), reader.GetInt32(1));
+                return new UserEntity(reader.GetString(0));
             }
             return null;
         }
@@ -67,14 +66,13 @@ namespace Api.DataAccess
         /// concurrent callers (relies on the UserId primary key), so it can be called on
         /// every authenticated request to guarantee the auth identity has a profile row.
         /// </summary>
-        public async Task EnsureExistsAsync(string userId, int defaultHeightInCm)
+        public async Task EnsureExistsAsync(string userId)
         {
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = "INSERT OR IGNORE INTO Users (UserId, HeightInCm) VALUES ($userId, $heightInCm)";
+            command.CommandText = "INSERT OR IGNORE INTO Users (UserId) VALUES ($userId)";
             command.Parameters.AddWithValue("$userId", userId);
-            command.Parameters.AddWithValue("$heightInCm", defaultHeightInCm);
             await command.ExecuteNonQueryAsync();
         }
 
@@ -83,9 +81,8 @@ namespace Api.DataAccess
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = "INSERT INTO Users (UserId, HeightInCm) VALUES ($userId, $heightInCm)";
+            command.CommandText = "INSERT INTO Users (UserId) VALUES ($userId)";
             command.Parameters.AddWithValue("$userId", entity.UserId);
-            command.Parameters.AddWithValue("$heightInCm", entity.HeightInCm);
             await command.ExecuteNonQueryAsync();
         }
 

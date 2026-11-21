@@ -1,5 +1,3 @@
 namespace Api.Controllers.Models;
 
-public record User(
-    string UserId,
-    int heightInCm);
+public record User(string UserId);

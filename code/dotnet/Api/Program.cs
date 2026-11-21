@@ -1,5 +1,4 @@
 using Api.Controllers;
-using Api.Controllers.Report;
 using Api.Filters;
 using Microsoft.OpenApi;
 
@@ -67,11 +66,6 @@ public class Program
             return new DataAccess.UserRepository(connectionString!);
         });
 
-        builder.Services.AddSingleton(new Settings());
-        // Report feature is parked during the weight->dose rename (see ReportController /
-        // ReportHandler, commented out). Re-enable when the dose report slice is built.
-        // builder.Services.AddScoped<ReportHandler>();
-        
         var app = builder.Build();
 
         // Validate the API key configuration at startup so a bad config fails the deploy

@@ -44,8 +44,8 @@ Not a classic report. It should show, per medication:
   (DrugLevelCalculator.AmountRemainingSeriesMg). New page 4 ("Charts") with one uPlot chart
   per drug stacked vertically (drug-levels-charts + drug-level-chart), history-only with a
   15D/1M/45D/3M/All range selector (client-side filter, like me-tracker). uPlot added as a dependency.
-  63 tests green. NOTE: charts not yet eyeballed in a browser; landscape side-by-side layout
-  is a possible later tweak.
+  63 tests green. Checked in use on both our phones. Landscape side-by-side layout is a
+  possible later tweak.
 - STEP 4 DONE: first-order absorption (Bateman function). AbsorptionModel enum
   (Instant/FirstOrder, FirstOrder default); DrugParameters gains TmaxHours (presets: sema 48 h,
   tirz 24 h, reta 36 h — approximate placeholders); ka derived from Tmax by bisection
@@ -85,14 +85,6 @@ Not a classic report. It should show, per medication:
     to descriptive names at the same time (the new page is already overview-page).
   - Make the dosing intervals user-alterable (stored per user, not hardcoded).
 
-Parked (re-enable in later slices)
-----------------------------------
-- Report feature: ReportController + ReportHandler are commented out (weight/BMI-specific,
-  depended on the old Weight types). ReportHandlerTests + the report integration tests are
-  commented out too. The new levels page replaces this slot — the old weight-report logic
-  will be deleted rather than revived.
-- Settings.AverageWeightWindowInDays is weight-report-specific; left in place, unused.
-
 Other
 -----
 - DONE: update banner. When the service worker has a new version ready, a bar offers "Reload"
@@ -100,10 +92,3 @@ Other
   foreground. settings.json is gone: UI git hash and API URL are build-time constants.
 - Medication list is hard-coded (Semaglutide, Tirzepatide, Retatrutide); dose unit fixed
   to mg. Revisit if this needs to be configurable.
-- CLAUDE.md: endpoint/field names updated to the dose domain in the data-entry notes;
-  do a broader pass for any remaining weight-era references.
-- Private backups (me-glipper-private/backups) hold old weight data in the old schema;
-  they won't restore into the new Doses table.
-- Users table still has HeightInCm (weight-tracker leftover; the Shotsy converter fills it
-  with a dummy 170). Check why it's still there / whether anything uses it, and remove it
-  if not (entity, repository, backup/restore format, tests).

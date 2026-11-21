@@ -43,11 +43,6 @@ public class ApiKeyAuthFilter : IAsyncAuthorizationFilter
 {
     public const string UserIdKeyname = "UserId";
 
-    // Height seeded for a user's profile row the first time they authenticate. It is
-    // deliberately absurd (1000cm) so an unset height is obvious in reports rather than
-    // masquerading as a plausible value. Real heights arrive via the backup/restore endpoint.
-    public const int SeededHeightInCm = 1000;
-
     private const string ApiKeyHeaderName = "X-API-Key";
     private readonly ApiKeyStore _apiKeyStore;
     private readonly UserRepository _userRepository;
@@ -74,8 +69,8 @@ public class ApiKeyAuthFilter : IAsyncAuthorizationFilter
         }
 
         // Guarantee every authenticated identity has a profile row so downstream code can
-        // rely on it. New users get a sentinel height until a real one is restored.
-        await _userRepository.EnsureExistsAsync(matchingApiKey.UserId, SeededHeightInCm);
+        // rely on it.
+        await _userRepository.EnsureExistsAsync(matchingApiKey.UserId);
 
         context.HttpContext.Items[UserIdKeyname] = matchingApiKey.UserId;
     }

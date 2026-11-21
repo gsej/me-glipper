@@ -42,7 +42,7 @@ public class BackupApiTests : IDisposable
         var client = _factory.CreateClientWithKey(ApiTestFactory.AliceKey);
 
         var original = new Backup(
-            new[] { new User(ApiTestFactory.AliceUserId, 180) },
+            new[] { new User(ApiTestFactory.AliceUserId), new User(ApiTestFactory.BobUserId) },
             new[]
             {
                 new DoseRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 1), "Semaglutide", 1.0m, false),
@@ -51,7 +51,7 @@ public class BackupApiTests : IDisposable
         await client.PostAsJsonAsync("/api/backup/restore", original);
 
         var replacement = new Backup(
-            new[] { new User(ApiTestFactory.AliceUserId, 175) },
+            new[] { new User(ApiTestFactory.AliceUserId) },
             new[]
             {
                 new DoseRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 2, 1), "Tirzepatide", 2.5m, false),
@@ -62,7 +62,7 @@ public class BackupApiTests : IDisposable
 
         var users = backup!.Users!.ToList();
         users.Should().ContainSingle();
-        users[0].heightInCm.Should().Be(175);
+        users[0].UserId.Should().Be(ApiTestFactory.AliceUserId);
 
         var records = backup.DoseRecords!.ToList();
         records.Should().ContainSingle();
@@ -76,7 +76,7 @@ public class BackupApiTests : IDisposable
         var client = _factory.CreateClientWithKey(ApiTestFactory.AliceKey);
 
         await client.PostAsJsonAsync("/api/backup/restore", new Backup(
-            new[] { new User(ApiTestFactory.AliceUserId, 180) },
+            new[] { new User(ApiTestFactory.AliceUserId) },
             new[]
             {
                 new DoseRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 1), "Semaglutide", 1.0m, false, "first dose"),
@@ -97,7 +97,7 @@ public class BackupApiTests : IDisposable
         var client = _factory.CreateClientWithKey(ApiTestFactory.AliceKey);
 
         await client.PostAsJsonAsync("/api/backup/restore", new Backup(
-            new[] { new User(ApiTestFactory.AliceUserId, 180) },
+            new[] { new User(ApiTestFactory.AliceUserId) },
             new[]
             {
                 new DoseRecord(Guid.NewGuid(), ApiTestFactory.AliceUserId, new DateTime(2025, 1, 1), "Semaglutide", 1.0m, false),

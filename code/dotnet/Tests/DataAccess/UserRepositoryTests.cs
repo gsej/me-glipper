@@ -23,13 +23,12 @@ public class UserRepositoryTests : IDisposable
     [Fact]
     public async Task AddThenGetById_RoundTripsTheUser()
     {
-        await _repository.AddAsync(new UserEntity("alice", 172));
+        await _repository.AddAsync(new UserEntity("alice"));
 
         var loaded = await _repository.GetByIdAsync("alice");
 
         loaded.Should().NotBeNull();
         loaded!.UserId.Should().Be("alice");
-        loaded.HeightInCm.Should().Be(172);
     }
 
     [Fact]
@@ -41,23 +40,22 @@ public class UserRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task EnsureExistsAsync_ForUnknownUser_CreatesRowWithGivenHeight()
+    public async Task EnsureExistsAsync_ForUnknownUser_CreatesRow()
     {
-        await _repository.EnsureExistsAsync("alice", 1000);
+        await _repository.EnsureExistsAsync("alice");
 
         var loaded = await _repository.GetByIdAsync("alice");
         loaded.Should().NotBeNull();
-        loaded!.HeightInCm.Should().Be(1000);
     }
 
     [Fact]
-    public async Task EnsureExistsAsync_ForExistingUser_LeavesHeightUnchanged()
+    public async Task EnsureExistsAsync_ForExistingUser_IsIdempotent()
     {
-        await _repository.AddAsync(new UserEntity("alice", 172));
+        await _repository.AddAsync(new UserEntity("alice"));
 
-        await _repository.EnsureExistsAsync("alice", 1000);
+        await _repository.EnsureExistsAsync("alice");
 
-        var loaded = await _repository.GetByIdAsync("alice");
-        loaded!.HeightInCm.Should().Be(172);
+        var all = await _repository.GetAllAsync();
+        all.Should().ContainSingle(u => u.UserId == "alice");
     }
 }
