@@ -70,6 +70,10 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
   private data?: uPlot.AlignedData;
   /** The yMax the current chart was built with; the scale range is fixed at construction. */
   private builtYMax: number | null = null;
+  /** The colour the current chart was built with; series strokes are fixed at construction. */
+  private builtColor: string | null = null;
+  /** The current chart's legend, watched so the plot re-fits once uPlot has laid it out. */
+  private observedLegend?: HTMLElement;
 
   ngAfterViewInit(): void {
     this.viewReady = true;
@@ -84,6 +88,15 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
   ngOnDestroy(): void {
     this.resizeObserver?.disconnect();
     this.chart?.destroy();
+  }
+
+  private destroyChart(): void {
+    if (this.observedLegend) {
+      this.resizeObserver?.unobserve(this.observedLegend);
+      this.observedLegend = undefined;
+    }
+    this.chart?.destroy();
+    this.chart = undefined;
   }
 
   private rebuild(): void {
@@ -134,22 +147,29 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
       return;
     }
     if (!this.data) {
-      this.chart?.destroy();
-      this.chart = undefined;
+      this.destroyChart();
       return;
     }
-    if (this.chart && this.builtYMax !== this.yMax) {
-      this.chart.destroy();
-      this.chart = undefined;
+    if (this.chart && (this.builtYMax !== this.yMax || this.builtColor !== this.color)) {
+      this.destroyChart();
     }
     if (this.chart) {
       this.chart.setData(this.data);
     } else {
       this.chart = new uPlot(this.buildOptions(), this.data, this.chartContainer.nativeElement);
       this.builtYMax = this.yMax;
+      this.builtColor = this.color;
       this.attachTouchHandlers(this.chart);
       // The legend only exists once the chart is built; shrink the plot so it fits in the box.
       this.chart.setSize(this.currentSize());
+      // Right after construction uPlot hasn't finished laying the legend out (it can measure
+      // narrow and tall, which would squash the plot to its minimum height), so also re-fit
+      // whenever the legend's size changes. Its height depends only on the width, so the
+      // re-fit can't trigger itself.
+      this.observedLegend = this.chart.root.querySelector<HTMLElement>('.u-legend') ?? undefined;
+      if (this.observedLegend) {
+        this.resizeObserver?.observe(this.observedLegend);
+      }
     }
   }
 
@@ -273,6 +293,7 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
     if (!this.chartContainer) {
       return;
     }
+    // Watches the container (and, once a chart exists, its legend; see renderChart).
     this.resizeObserver = new ResizeObserver(() => {
       if (this.chart) {
         this.chart.setSize(this.currentSize());

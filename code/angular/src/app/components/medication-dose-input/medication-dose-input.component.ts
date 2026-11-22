@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -7,19 +7,21 @@ import {
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DoseService } from '../../services/dose.service';
-import { MedicationService } from '../../services/medication.service';
 
+/**
+ * The Add dose form for one medication, on the Medication page: the medication is fixed (no
+ * dropdown). This is the only place doses are added.
+ */
 @Component({
-  selector: 'app-dose-input',
-  templateUrl: './dose-input.component.html',
-  styleUrls: ['./dose-input.component.scss'],
+  selector: 'app-medication-dose-input',
+  templateUrl: './medication-dose-input.component.html',
+  styleUrls: ['./medication-dose-input.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
   imports: [CommonModule, ReactiveFormsModule],
 })
-export class DoseInputComponent {
-  // Medication names for the dropdown, in display order (from the API).
-  medications: string[] = [];
-  medicationsError = false;
+export class MedicationDoseInputComponent {
+  /** The medication the dose is recorded against. */
+  @Input() medicationName = '';
 
   doseForm: FormGroup;
   status: string | null = null;
@@ -30,21 +32,11 @@ export class DoseInputComponent {
   constructor(
     private fb: FormBuilder,
     private doseService: DoseService,
-    medicationService: MedicationService,
   ) {
-    medicationService.getMedications().subscribe({
-      next: (medications) => (this.medications = medications.map((m) => m.name)),
-      error: (error) => {
-        console.error('Error fetching medications:', error);
-        this.medicationsError = true;
-      },
-    });
-
     const now = new Date();
     this.doseForm = this.fb.group({
       date: [this.toDateInput(now), [Validators.required]],
       time: [this.toTimeInput(now), [Validators.required]],
-      medicationName: ['', [Validators.required]],
       doseAmountMg: ['', [Validators.required, Validators.min(0)]],
       notes: ['', [Validators.maxLength(200)]],
     });
@@ -78,7 +70,7 @@ export class DoseInputComponent {
       return;
     }
 
-    const { date, time, medicationName, doseAmountMg, notes } = this.doseForm.value;
+    const { date, time, doseAmountMg, notes } = this.doseForm.value;
     // Combine the date and time pickers into a single local instant; it is serialised to
     // UTC on the wire and stored as UTC by the API.
     const takenAt = new Date(`${date}T${time}`);
@@ -86,7 +78,7 @@ export class DoseInputComponent {
     this.doseService
       .addDose({
         takenAt,
-        medicationName,
+        medicationName: this.medicationName,
         doseAmountMg: Number(doseAmountMg),
         notes: notes?.trim() || undefined,
       })
@@ -112,7 +104,6 @@ export class DoseInputComponent {
     this.doseForm.reset({
       date: this.toDateInput(now),
       time: this.toTimeInput(now),
-      medicationName: '',
       doseAmountMg: '',
       notes: '',
     });

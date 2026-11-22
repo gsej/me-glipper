@@ -35,19 +35,6 @@ public class LevelsController : ControllerBase
         _httpContextAccessor = httpContextAccessor;
     }
 
-    [HttpGet]
-    public async Task<LevelsResponse> Get()
-    {
-        var dosed = await GetDosedDrugsAsync();
-        var now = DateTime.UtcNow;
-
-        var levels = dosed
-            .Select(x => new DrugLevel(x.Drug.Name, DrugLevelCalculator.AmountRemainingMg(x.Doses, now, x.Drug, AbsorptionModel.FirstOrder)))
-            .ToList();
-
-        return new LevelsResponse(levels);
-    }
-
     [HttpGet("series")]
     public async Task<LevelSeriesResponse> GetSeries()
     {

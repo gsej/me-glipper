@@ -80,9 +80,15 @@ Not a classic report. It should show, per medication:
   past capped at the history there is), with a grey "today" line at now. GET /api/levels/series
   now returns Now and runs to now + a quarter of the history span (ForecastFraction), which covers
   every range. Active/cleared and the range cutoff are judged at now, not at the projection's end.
+- PAGES REARRANGED: three pages now (pageNames overview, medication, history).
+  - Overview: next-dose cards (tap one to open the Medication page with it selected), then the
+    level charts with each drug's current amount in its title.
+  - Medication: dropdown, next-dose card, that medication's chart, and an Add dose form fixed
+    to it (the only place doses are added).
+  - Dose history (history-page).
+  The Add dose (page-1, dose-input), Estimated Levels (page-3, drug-levels) and Charts (page-4)
+  pages are gone, as is GET /api/levels (the series and next-doses endpoints remain).
 - NEXT STEPS:
-  - Rearrange what lives on which page (page assignment is provisional). Rename page-1..page-4
-    to descriptive names at the same time (the new page is already overview-page).
   - Make the dosing intervals user-alterable (stored per user, not hardcoded).
 
 Other

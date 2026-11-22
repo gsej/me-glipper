@@ -3,12 +3,12 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { DoseRecordsComponent } from '../dose-records/dose-records.component';
 
 @Component({
-  selector: 'app-page-2',
+  selector: 'app-history-page',
   imports: [DoseRecordsComponent],
-  templateUrl: './page-2.component.html',
+  templateUrl: './history-page.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrls: ['./page-2.component.scss'],
+  styleUrls: ['./history-page.component.scss'],
 })
-export class Page2Component {
+export class HistoryPageComponent {
   // Container for the dose history list.
 }

@@ -5,18 +5,9 @@ import { SettingsService } from '../settings/settings.service';
 
 /**
  * Below this an amount is treated as effectively zero. Amounts are shown to 2 decimal places,
- * so anything under this already displays as 0.00 mg. Used by the levels page and the charts.
+ * so anything under this already displays as 0.00 mg. Used by the overview's charts.
  */
 export const EFFECTIVELY_ZERO_MG = 0.005;
-
-export interface DrugLevel {
-  medicationName: string;
-  amountRemainingMg: number;
-}
-
-export interface LevelsResponse {
-  levels: DrugLevel[];
-}
 
 export interface DrugLevelSeries {
   medicationName: string;
@@ -58,10 +49,6 @@ export class LevelsService {
     settingsService: SettingsService,
   ) {
     this.apiUrl = settingsService.settings.apiUrl;
-  }
-
-  getLevels(): Observable<LevelsResponse> {
-    return this.http.get<LevelsResponse>(`${this.apiUrl}/api/levels`);
   }
 
   getSeries(): Observable<LevelSeriesResponse> {

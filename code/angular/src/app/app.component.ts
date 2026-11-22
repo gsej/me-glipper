@@ -13,24 +13,18 @@ import { SettingsService } from './settings/settings.service';
 import { HealthService } from './services/health.service';
 import { PiComponent } from './components/pi/pi.component';
 import { UpdateBannerComponent } from './components/update-banner/update-banner.component';
-import { ApiKeyInputComponent } from './components/api-key-input/api-key-input.component';
 import { OverviewPageComponent } from './components/overview-page/overview-page.component';
-import { Page1Component } from './components/page-1/page-1.component';
-import { Page2Component } from './components/page-2/page-2.component';
-import { Page3Component } from './components/page-3/page-3.component';
-import { Page4Component } from './components/page-4/page-4.component';
+import { MedicationPageComponent } from './components/medication-page/medication-page.component';
+import { HistoryPageComponent } from './components/history-page/history-page.component';
 
 @Component({
   selector: 'app-root',
   imports: [
     ReactiveFormsModule,
     OverviewPageComponent,
-    Page1Component,
-    Page2Component,
-    Page3Component,
-    Page4Component,
+    MedicationPageComponent,
+    HistoryPageComponent,
     PiComponent,
-    ApiKeyInputComponent,
     UpdateBannerComponent,
   ],
   templateUrl: './app.component.html',
@@ -42,12 +36,8 @@ export class AppComponent implements AfterViewInit {
   public gitHash: string = 'not set';
   public apiGitHash: string = '…';
 
-  get hashText(): string {
-    return `ui: ${this.gitHash}, api: ${this.apiGitHash}`;
-  }
-
   currentPage: number = 0;
-  totalPages: number = 5;
+  totalPages: number = 3;
   startX: number = 0;
 
   // True when the current touch began inside an element marked [data-no-page-swipe] (e.g. a
@@ -57,7 +47,7 @@ export class AppComponent implements AfterViewInit {
 
   isInitialLoad: boolean = true;
 
-  pageNames: string[] = ['overview', 'input', 'history', 'report', 'charts'];
+  pageNames: string[] = ['overview', 'medication', 'history'];
 
   @ViewChild('pagesContainer') pagesContainer!: ElementRef;
 

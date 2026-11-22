@@ -1,0 +1,39 @@
+@if (error) {
+  <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    <p>{{ error }}</p>
+    <button
+      class="mt-2 bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded text-sm"
+      (click)="onRetry()"
+    >
+      Try Again
+    </button>
+  </div>
+}
+
+@if (!isLoading && !error) {
+  @if (nextDose; as nextDose) {
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <!-- No medication name: the page's dropdown already shows it. -->
+      <div class="flex items-baseline justify-between">
+        <span class="text-gray-900">
+          Next due
+          <span class="font-semibold">{{ nextDose.nextDueAt | date: "EEE d MMM" }}</span>
+        </span>
+        <span
+          class="text-sm font-semibold"
+          [class.text-red-600]="isOverdue(nextDose)"
+          [class.text-blue-600]="!isOverdue(nextDose)"
+          >{{ relativeText(nextDose) }}</span
+        >
+      </div>
+      <p class="mt-1 text-sm text-gray-500">
+        Last dose {{ nextDose.lastTakenAt | date: "EEE d MMM HH:mm" }} ·
+        {{ nextDose.lastDoseAmountMg }} mg · every {{ nextDose.intervalDays }} days
+      </p>
+    </div>
+  } @else {
+    <div class="text-center py-4">
+      <p class="text-gray-500">Not currently being taken.</p>
+    </div>
+  }
+}

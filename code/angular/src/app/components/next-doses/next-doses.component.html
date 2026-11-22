@@ -18,8 +18,13 @@
   } @else {
     <div class="space-y-3 pb-3">
       @for (nextDose of nextDoses; track nextDose.medicationName) {
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div class="flex items-baseline justify-between">
+        <button
+          type="button"
+          class="block w-full text-left bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:bg-gray-50 active:bg-gray-100"
+          (click)="openMedication(nextDose)"
+        >
+          <!-- Spans, not div/p: a button may only contain inline content. -->
+          <span class="flex items-baseline justify-between">
             <span class="font-medium text-gray-900">{{ nextDose.medicationName }}</span>
             <span
               class="text-sm font-semibold"
@@ -27,16 +32,12 @@
               [class.text-blue-600]="!isOverdue(nextDose)"
               >{{ relativeText(nextDose) }}</span
             >
-          </div>
-          <p class="mt-2 text-gray-900">
+          </span>
+          <span class="block mt-2 text-gray-900">
             Next due
             <span class="font-semibold">{{ nextDose.nextDueAt | date: "EEE d MMM" }}</span>
-          </p>
-          <p class="text-sm text-gray-500">
-            Last dose {{ nextDose.lastTakenAt | date: "EEE d MMM HH:mm" }} ·
-            {{ nextDose.lastDoseAmountMg }} mg · every {{ nextDose.intervalDays }} days
-          </p>
-        </div>
+          </span>
+        </button>
       }
     </div>
   }

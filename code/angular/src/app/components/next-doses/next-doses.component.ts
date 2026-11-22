@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LevelsService, NextDose } from '../../services/levels.service';
 import { DoseService } from '../../services/dose.service';
 
@@ -14,6 +15,8 @@ import { DoseService } from '../../services/dose.service';
 export class NextDosesComponent implements OnInit {
   private readonly levelsService = inject(LevelsService);
   private readonly doseService = inject(DoseService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   nextDoses: NextDose[] = [];
   isLoading = false;
@@ -49,6 +52,15 @@ export class NextDosesComponent implements OnInit {
 
   onRetry(): void {
     this.load();
+  }
+
+  /** Go to the Medication page with this medication selected (both are carried in the URL). */
+  openMedication(nextDose: NextDose): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: 'medication', medication: nextDose.medicationName },
+      queryParamsHandling: 'merge',
+    });
   }
 
   /** Overdue when the due date (local calendar day) is before today. */

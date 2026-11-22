@@ -39,8 +39,14 @@
 
     @for (s of visibleSeries; track s.medicationName) {
       <div class="mb-6">
-        <h3 class="text-sm font-semibold text-gray-700 mb-1" [style.padding-left.px]="plotLeftPx">{{ s.medicationName }}</h3>
-        <div class="h-48 sm:h-56">
+        <h3
+          class="flex items-baseline justify-between text-sm text-gray-700 mb-1"
+          [style.padding-left.px]="plotLeftPx"
+        >
+          <span class="font-semibold">{{ s.medicationName }}</span>
+          <span><span class="font-semibold">{{ s.nowMg | number: "1.2-2" }}</span> mg now</span>
+        </h3>
+        <div class="h-40 sm:h-56">
           <app-drug-level-chart
             [times]="times"
             [amountsMg]="s.amountsMg"

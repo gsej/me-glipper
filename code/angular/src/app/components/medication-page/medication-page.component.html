@@ -1,0 +1,29 @@
+<div class="w-full h-[calc(100%-3rem)] flex flex-col">
+  <h2 class="text-xl font-bold text-blue-500 mb-[18px] text-center pt-2.5">Medication</h2>
+  <div class="w-full flex-1 overflow-y-auto min-h-0 px-4">
+    <div class="mb-4">
+      <label for="medication-page-select" class="sr-only">Medication</label>
+      <select
+        id="medication-page-select"
+        [ngModel]="selected"
+        (ngModelChange)="onSelect($event)"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        @for (medication of medications; track medication) {
+          <option [value]="medication">{{ medication }}</option>
+        }
+      </select>
+      @if (medicationsError) {
+        <div class="text-sm text-red-500 mt-1">Couldn't load the medication list</div>
+      }
+    </div>
+
+    @if (selected) {
+      <div class="mb-4">
+        <app-medication-next-dose [medicationName]="selected"></app-medication-next-dose>
+      </div>
+      <app-medication-level-chart [medicationName]="selected"></app-medication-level-chart>
+      <app-medication-dose-input [medicationName]="selected"></app-medication-dose-input>
+    }
+  </div>
+</div>

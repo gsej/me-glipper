@@ -11,6 +11,7 @@ import { NextDosesComponent } from '../next-doses/next-doses.component';
   styleUrls: ['./overview-page.component.scss'],
 })
 export class OverviewPageComponent {
-  // First page: an at-a-glance overview: the estimated-level charts, then the next dose due per
-  // medication. (The charts are also still on the Charts page for now.)
+  // First page: an at-a-glance overview: the next dose due per medication, then the
+  // estimated-level charts with each drug's current amount (the same order as the Medication
+  // page).
 }

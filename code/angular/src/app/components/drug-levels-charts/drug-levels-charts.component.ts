@@ -27,6 +27,8 @@ interface ChartSeries extends DrugLevelSeries {
    * projection past now is ignored, so a drug active today never counts as cleared.
    */
   zeroSinceSecs: number | null;
+  /** The estimated amount now (mg): the series' value at the last point at or before now. */
+  nowMg: number;
 }
 
 @Component({
@@ -139,6 +141,7 @@ export class DrugLevelsChartsComponent implements OnInit {
         ...s,
         yMax: peak > 0 ? peak * Y_HEADROOM : null,
         zeroSinceSecs: active ? null : lastAbove >= 0 ? xs[lastAbove] : (xs[0] ?? 0),
+        nowMg: s.amountsMg[nowIndex] ?? 0,
       };
     });
 
