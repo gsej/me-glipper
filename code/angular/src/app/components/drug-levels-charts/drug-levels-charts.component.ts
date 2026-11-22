@@ -108,11 +108,6 @@ export class DrugLevelsChartsComponent implements OnInit {
     return this.series.filter((s) => this.isVisible(s));
   }
 
-  /** Names of the drugs hidden because they are effectively zero throughout the window. */
-  get hiddenNames(): string[] {
-    return this.series.filter((s) => !this.isVisible(s)).map((s) => s.medicationName);
-  }
-
   private isVisible(s: ChartSeries): boolean {
     if (this.rangeDays == null || s.zeroSinceSecs == null) {
       return true;

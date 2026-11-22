@@ -56,15 +56,5 @@
         <p class="text-gray-500">No measurable levels in this period — try a longer range.</p>
       </div>
     }
-
-    @if (hiddenNames.length > 0) {
-      <p class="text-xs text-gray-500 pr-1 pb-2" [style.padding-left.px]="plotLeftPx">
-        Hidden (effectively zero in this period): {{ hiddenNames.join(", ") }}
-      </p>
-    }
-
-    <p class="text-xs text-gray-400 pr-1 pb-2" [style.padding-left.px]="plotLeftPx">
-      Estimated amount in the body over time. Dashed: projected, assuming no further doses.
-    </p>
   }
 }

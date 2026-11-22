@@ -14,6 +14,12 @@
   visibility: visible;
 }
 
+// The projection (third series) shares the "mg" legend entry, which falls back to its value
+// past now (see the series config), so its own entry is hidden.
+:host ::ng-deep .uplot .u-legend .u-series:nth-child(3) {
+  display: none;
+}
+
 // Let vertical swipes scroll the page but hand horizontal drags to the chart, so the cursor can
 // follow a finger (see attachTouchHandlers).
 :host ::ng-deep .uplot .u-over {

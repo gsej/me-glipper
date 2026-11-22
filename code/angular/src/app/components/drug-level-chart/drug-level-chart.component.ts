@@ -174,6 +174,16 @@ export class DrugLevelChartComponent implements AfterViewInit, OnChanges, OnDest
           fill: this.color + '22', // light translucent area under the line
           width: 2,
           points: { show: false },
+          // One legend value for both series: past now the history is null, so show the
+          // projection's value instead (its own legend entry is hidden in the SCSS).
+          // Same formatting as uPlot's default legend values.
+          value: (u, rawValue, _seriesIdx, idx) => {
+            if (idx == null) {
+              return '--';
+            }
+            const v = rawValue ?? u.data[2][idx];
+            return v == null ? '' : uPlot.fmtNum(v);
+          },
         },
         {
           label: 'projected mg',
