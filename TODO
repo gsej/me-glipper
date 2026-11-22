@@ -44,8 +44,7 @@ Not a classic report. It should show, per medication:
   (DrugLevelCalculator.AmountRemainingSeriesMg). New page 4 ("Charts") with one uPlot chart
   per drug stacked vertically (drug-levels-charts + drug-level-chart), history-only with a
   15D/1M/45D/3M/All range selector (client-side filter, like me-tracker). uPlot added as a dependency.
-  63 tests green. Checked in use on both our phones. Landscape side-by-side layout is a
-  possible later tweak.
+  63 tests green. Checked in use on both our phones.
 - STEP 4 DONE: first-order absorption (Bateman function). AbsorptionModel enum
   (Instant/FirstOrder, FirstOrder default); DrugParameters gains TmaxHours (presets: sema 48 h,
   tirz 24 h, reta 36 h — approximate placeholders); ka derived from Tmax by bisection
@@ -90,6 +89,11 @@ Not a classic report. It should show, per medication:
   pages are gone, as is GET /api/levels (the series and next-doses endpoints remain).
 - NEXT STEPS:
   - Make the dosing intervals user-alterable (stored per user, not hardcoded).
+  - Settings page: a proper settings page to replace the π modal (API key, version info, and
+    future per-user settings such as the dosing intervals).
+  - Proper authentication: replace the per-user API keys (typed in and kept in localStorage)
+    with real sign-in.
+  - Vial management / calculation page: track vials and calculate doses from them.
 
 Other
 -----
@@ -105,5 +109,5 @@ Other
   next-dose rules). GET /api/medications. Sources for the values: docs/medications.md.
   Not editable from the app. Dose unit is fixed to mg.
 - DONE: the frontend reads GET /api/medications (MedicationService, fetched once and cached)
-  for the dose-input dropdown and the chart colours; nothing medication-specific is hardcoded
+  for the Medication page's dropdown and the chart colours; nothing medication-specific is hardcoded
   in the frontend any more.
