@@ -36,7 +36,10 @@ export class NextDosesComponent implements OnInit {
     this.error = null;
     this.levelsService.getNextDoses().subscribe({
       next: (response) => {
-        this.nextDoses = response.nextDoses;
+        // Soonest due first (most overdue at the top); same-day doses by time of day.
+        this.nextDoses = [...response.nextDoses].sort(
+          (a, b) => new Date(a.nextDueAt).getTime() - new Date(b.nextDueAt).getTime(),
+        );
         this.isLoading = false;
       },
       error: (error) => {
