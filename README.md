@@ -25,34 +25,44 @@ Ongoing work and known issues are tracked in `TODO`.
 | Backend API | .NET 10 (ASP.NET Core) | `code/dotnet/Api/` |
 | Database | SQLite, schema managed by DbUp migrations | mounted from a private directory outside the repo |
 
-The frontend is a static Angular app hosted on GitHub Pages. It communicates with a backend API running on a home server.
+Both run on a home server, each in its own Docker container: the API, and nginx serving the built Angular app. A reverse proxy (the `home-proxy` repo) serves them together at `https://me-glipper.gsej.co.uk`, sending `/api/*` to the API and everything else to the frontend.
 
-The backend runs in a Docker container. It reads and writes a SQLite database file that lives outside the repo in a private directory, which also holds secrets via a `.env` file.
+The API reads and writes a SQLite database file that lives outside the repo in a private directory, which also holds secrets via a `.env` file.
 
 The schema is created and changed by numbered SQL migrations in `code/dotnet/Api/Migrations/`, which the API runs on startup (DbUp). The medications the app knows about, with their dosing intervals and pharmacokinetic values, are reference data seeded by those migrations; see `docs/medications.md`.
 
 ## Deployment
 
-### Frontend
-
-Deployed via a GitHub Actions workflow (`.github/workflows/webui-prod.yml`). It runs automatically on pushes to `master` that change the frontend (`code/angular/**`) or the workflow itself, and can also be run by hand (**workflow_dispatch**) from the GitHub Actions UI. The API is deployed separately (see Backend), so a change that needs a new API should have the API deployed too.
-
-The workflow builds the Angular app and deploys the static files to **GitHub Pages**. The production API URL (the workflow's `API_URL` environment variable) and the commit hash are passed to `ng build --define` and baked into the bundle; without them, as in local development, the app uses `http://localhost:5200` and shows `local` as the UI version in the π settings modal.
-
-### Backend
-
-Deployed to a **Proxmox** LXC as Infrastructure-as-Code:
+Both parts are deployed to a **Proxmox** LXC as Infrastructure-as-Code:
 
 - **`infra/`** — Terraform builds an unprivileged Ubuntu 24.04 LXC on the Proxmox
   host (M900), with a dedicated persistent volume for the SQLite DB. See
   `infra/README.md`.
-- **`ansible/`** — Ansible installs Docker, clones this repo, builds/starts the
-  API from `docker-compose.yml`, and exposes it over public HTTPS via Tailscale
-  Funnel at `https://me-glipper-m900.<tailnet>.ts.net`. See `ansible/README.md`.
+- **`ansible/`** — Ansible installs Docker, clones this repo, and builds/starts
+  the API and the frontend from `docker-compose.yml`. See `ansible/README.md`.
 
-`docker-compose.yml` builds the image from `code/dotnet/Api/Dockerfile` and runs
-it on port 5200, mounting the DB volume and `.env` from `/opt/me-glipper-data`
-(provisioned by Terraform/Ansible). Because it uses those absolute paths, it is a
+To deploy, push to `master` (the box builds from its own clone), then run:
+
+```bash
+./deploy.sh
+```
+
+`docker-compose.yml` has two services:
+
+- **`api`** builds from `code/dotnet/Api/Dockerfile` and runs on port 5200,
+  mounting the DB volume and `.env` from `/opt/me-glipper-data` (provisioned by
+  Terraform/Ansible).
+- **`web`** builds the Angular app with `code/angular/Dockerfile` and serves it
+  with nginx on port 5201. The build bakes in the commit hash and an empty API
+  URL (`ng build --define API_URL=''`), so the app calls `/api/...` on whichever
+  site served it. Without these defines, as in local development, the app uses
+  `http://localhost:5200` and shows `local` as the UI version in the π settings
+  modal.
+
+The proxy in `home-proxy` is what makes them public; nothing on this box is
+exposed to the internet directly.
+
+Because `docker-compose.yml` uses those absolute paths, it is a
 **deployment** compose — for local dev run the API directly with
 `dotnet run --project code/dotnet/Api` instead.
 
@@ -60,12 +70,12 @@ Database migrations run when the API starts, so take a backup before deploying a
 adds one. If a migration fails, its transaction rolls back and the API doesn't start, so the
 deploy's health check fails and the data is left as it was.
 
-#### Verifying the running build
+### Verifying the running build
 
 The health endpoint returns the git hash the image was built from:
 
 ```bash
-curl https://me-glipper-m900.<tailnet>.ts.net/api/healthz
+curl https://me-glipper.gsej.co.uk/api/healthz
 # {"status":"Healthy","gitHash":"abc1234"}
 ```
 

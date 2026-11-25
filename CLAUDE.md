@@ -25,7 +25,7 @@ reusable patterns (test scaffolding, clear layering) are valued.
 
 - **.NET 10** (`net10.0`) — both `Api` and `Tests`.
 - **Angular 22**, **TypeScript ~5.9**. Uses the `@angular/build` application builder.
-- **Node**: Angular 22 requires Node ≥ 22.22.3 (or ≥24.15.0 / ≥26). CI uses `22.x`.
+- **Node**: Angular 22 requires Node ≥ 22.22.3 (or ≥24.15.0 / ≥26). The frontend image builds with `node:22`.
 - **`@angular/build` must track the Angular major** — after `ng update` it can get
   pinned to a newer major than core (e.g. 22 while on 19); fix it to match.
 
@@ -67,7 +67,7 @@ The service worker is off in `ng serve`, so the banner never shows in local dev.
   test class.
 - Angular: the default CLI scaffold specs were removed. There are currently **no**
   Angular specs, so `ng test` errors with `TS18003` until a real spec is added.
-  CI only builds the frontend; it does not run `ng test`.
+  There's no CI: the frontend is only compiled when the box builds its Docker image.
 
 ## Domain / API notes
 

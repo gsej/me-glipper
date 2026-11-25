@@ -1,13 +1,12 @@
 ---
 # --- Pre-flight: deploy secrets must exist on the control machine -----------
-# Both files are gitignored; a missing one would otherwise fail later with a
+# The file is gitignored; a missing one would otherwise fail later with a
 # cryptic "copy: could not find src". Check up front with a clear message.
 - name: Check the deploy secret files exist (control machine)
   ansible.builtin.stat:
     path: "{{ item }}"
   loop:
     - "{{ meglipper_env_src }}"
-    - "{{ meglipper_ts_oauth_src }}"
   delegate_to: localhost
   register: meglipper_secret_stat
 
@@ -144,8 +143,3 @@
   retries: 10
   delay: 3
   until: meglipper_web.status == 200
-
-# --- Public exposure (Tailscale Funnel) -------------------------------------
-# Kept in its own file so the whole block is copyable to the Frigate repo.
-- name: Expose the API over the internet via Tailscale Funnel
-  ansible.builtin.import_tasks: tailscale.yml

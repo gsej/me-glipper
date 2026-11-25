@@ -14,10 +14,8 @@ datastore_id         = "local-lvm"
 storage_datastore_id = "local-lvm"
 data_size_gb         = 1
 
-# LXC OS hostname. Set to a box-specific name (default is "me-glipper") so it
-# aligns with the Tailscale node name set in the Ansible inventory
-# (meglipper_ts_hostname=me-glipper-m900), using the `-m900` per-host naming
-# convention.
+# LXC OS hostname. Set to a box-specific name (default is "me-glipper"), using
+# the `-m900` per-host naming convention.
 hostname = "me-glipper-m900"
 
 container_id = 102

@@ -7,8 +7,8 @@ Terraform workspaces (see below).
 
 ## Design
 
-- **Unprivileged LXC** — the API is internet-facing (Tailscale Funnel, phase 2)
-  and needs no device passthrough, so unprivileged gives stronger isolation.
+- **Unprivileged LXC** — the API is internet-facing (through home-proxy) and
+  needs no device passthrough, so unprivileged gives stronger isolation.
   `nesting`+`keyctl` are still needed for Docker-in-LXC.
 - **root@pam auth** — the provider authenticates with username/password, not an
   API token: tokens can't set feature flags like `keyctl`.
