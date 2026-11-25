@@ -136,6 +136,15 @@
   delay: 3
   until: meglipper_health.status == 200
 
+- name: Wait for the frontend
+  ansible.builtin.uri:
+    url: "http://localhost:5201/"
+    status_code: 200
+  register: meglipper_web
+  retries: 10
+  delay: 3
+  until: meglipper_web.status == 200
+
 # --- Public exposure (Tailscale Funnel) -------------------------------------
 # Kept in its own file so the whole block is copyable to the Frigate repo.
 - name: Expose the API over the internet via Tailscale Funnel

@@ -27,3 +27,15 @@ services:
       # API restore endpoint out-of-band.
       - /opt/me-glipper-data/database:/app/database
     restart: always
+
+  # The Angular frontend, served by nginx. home-proxy sends /api/* on
+  # me-glipper.gsej.co.uk to the api service above and everything else here.
+  web:
+    build:
+      context: ./code/angular
+      dockerfile: Dockerfile
+      args:
+        GIT_HASH: ${GIT_HASH:-unknown}
+    ports:
+      - "5201:80"
+    restart: always
