@@ -16,6 +16,7 @@ import { UpdateBannerComponent } from './components/update-banner/update-banner.
 import { OverviewPageComponent } from './components/overview-page/overview-page.component';
 import { MedicationPageComponent } from './components/medication-page/medication-page.component';
 import { HistoryPageComponent } from './components/history-page/history-page.component';
+import { VialPageComponent } from './components/vial-page/vial-page.component';
 
 @Component({
   selector: 'app-root',
@@ -24,6 +25,7 @@ import { HistoryPageComponent } from './components/history-page/history-page.com
     OverviewPageComponent,
     MedicationPageComponent,
     HistoryPageComponent,
+    VialPageComponent,
     PiComponent,
     UpdateBannerComponent,
   ],
@@ -37,7 +39,7 @@ export class AppComponent implements AfterViewInit {
   public apiGitHash: string = '…';
 
   currentPage: number = 0;
-  totalPages: number = 3;
+  totalPages: number = 4;
   startX: number = 0;
 
   // True when the current touch began inside an element marked [data-no-page-swipe] (e.g. a
@@ -47,7 +49,7 @@ export class AppComponent implements AfterViewInit {
 
   isInitialLoad: boolean = true;
 
-  pageNames: string[] = ['overview', 'medication', 'history'];
+  pageNames: string[] = ['overview', 'medication', 'history', 'vial'];
 
   @ViewChild('pagesContainer') pagesContainer!: ElementRef;
 

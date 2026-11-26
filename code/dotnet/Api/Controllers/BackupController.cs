@@ -13,15 +13,18 @@ public class BackupController : ControllerBase
     private readonly UserRepository _userRepository;
     private readonly DoseRepository _doseRepository;
     private readonly MedicationRepository _medicationRepository;
+    private readonly VialRepository _vialRepository;
 
     public BackupController(
         UserRepository userRepository,
         DoseRepository doseRepository,
-        MedicationRepository medicationRepository)
+        MedicationRepository medicationRepository,
+        VialRepository vialRepository)
     {
         _userRepository = userRepository;
         _doseRepository = doseRepository;
         _medicationRepository = medicationRepository;
+        _vialRepository = vialRepository;
     }
 
     [HttpGet]
@@ -41,29 +44,40 @@ public class BackupController : ControllerBase
                 entity.Notes))
             .OrderBy(record => record.TakenAt);
 
-        return new Backup(users, doseRecords);
+        var vials = (await _vialRepository.GetAllAsync())
+            .Select(VialsController.ToRecord);
+
+        return new Backup(users, doseRecords, vials);
     }
 
     [HttpPost("restore")]
     public async Task<IActionResult> Restore([FromBody] Backup? backup)
     {
-        // A restore is a full snapshot, so both sections are required.
+        // A restore is a full snapshot, so users and doses are required. Vials are optional so
+        // backups taken before vials existed still restore (with no vials).
         if (backup?.Users == null || backup.DoseRecords == null)
             return BadRequest("No records provided");
 
-        // Backups name each dose's medication; resolve the names to ids before wiping
-        // anything, so a backup with an unknown medication leaves the database untouched.
+        var vials = backup.Vials ?? [];
+
+        // Backups name each dose's and vial's medication; resolve the names to ids before
+        // wiping anything, so a backup with an unknown medication leaves the database untouched.
         var medicationIds = (await _medicationRepository.GetAllAsync())
             .ToDictionary(m => m.Name, m => m.MedicationId, StringComparer.OrdinalIgnoreCase);
         var unknown = backup.DoseRecords
             .Select(d => d.MedicationName)
+            .Concat(vials.Select(v => v.MedicationName))
             .Where(name => !medicationIds.ContainsKey(name))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
         if (unknown.Count > 0)
             return BadRequest($"Unknown medication(s): {string.Join(", ", unknown)}.");
 
-        // Wipe everything, then re-insert users before doses.
+        // Wipe everything, then re-insert users before doses and vials.
+        foreach (var entity in await _vialRepository.GetAllAsync())
+        {
+            await _vialRepository.HardDeleteAsync(entity);
+        }
         foreach (var entity in await _doseRepository.GetAllAsync())
         {
             await _doseRepository.HardDeleteAsync(entity);
@@ -87,6 +101,16 @@ public class BackupController : ControllerBase
                 doseRecord.DoseAmountMg,
                 doseRecord.Deleted,
                 doseRecord.Notes));
+        }
+        foreach (var vial in vials)
+        {
+            await _vialRepository.UpsertAsync(new VialEntity(
+                vial.VialId == Guid.Empty ? Guid.NewGuid() : vial.VialId,
+                vial.UserId,
+                medicationIds[vial.MedicationName],
+                vial.InitialAmountMg,
+                vial.InitialVolumeMl,
+                vial.StartedOn));
         }
 
         return Ok();

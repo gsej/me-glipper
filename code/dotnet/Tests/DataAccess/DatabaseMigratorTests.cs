@@ -20,11 +20,12 @@ public class DatabaseMigratorTests : IDisposable
     {
         DatabaseMigrator.Migrate(ConnectionString);
 
-        TableNames().Should().Contain(new[] { "Doses", "Users", "Medications", "SchemaVersions" });
+        TableNames().Should().Contain(new[] { "Doses", "Users", "Medications", "Vials", "SchemaVersions" });
         AppliedScripts().Select(Path.GetFileNameWithoutExtension).Should().Equal(
             "Api.Migrations.0001_InitialSchema",
             "Api.Migrations.0002_AddMedications",
-            "Api.Migrations.0003_DosesReferenceMedicationsById");
+            "Api.Migrations.0003_DosesReferenceMedicationsById",
+            "Api.Migrations.0004_AddVials");
     }
 
     [Fact]

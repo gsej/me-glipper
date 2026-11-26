@@ -1,0 +1,17 @@
+
+@baseUrl = http://localhost:5200/api
+
+### set the current vial of a medication (replaces any existing one)
+PUT {{baseUrl}}/vials/Tirzepatide
+Content-Type: application/json
+X-Api-Key: apikey
+
+{
+    "initialAmountMg": 10,
+    "initialVolumeMl": 2,
+    "startedOn": "2025-03-14"
+}
+
+### get the user's vials
+GET {{baseUrl}}/vials
+X-Api-Key: apikey

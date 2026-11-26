@@ -89,6 +89,15 @@ The service worker is off in `ng serve`, so the banner never shows in local dev.
   into an automatic `400`), with empty/whitespace normalised to `NULL` in the
   repository. Set it on create, or edit it later via `PUT /api/dose/{id}`. Use the
   name **`Notes`** consistently (entity/column/request/API/service/UI) — never `Comment`.
+- **Vials** (`Vials` table, `GET /api/vials`, `PUT /api/vials/{medicationName}`): each
+  user's current vial of a medication, as `InitialAmountMg` (medication in it) and
+  `InitialVolumeMl` (liquid it was made up with), both `> 0`, and `StartedOn`. `StartedOn` is
+  a calendar date (`DateOnly`, stored as `yyyy-MM-dd`), not an instant, so the UTC rule
+  below doesn't apply to it; the UI shows the vial's age from it (0 on the start day) and
+  doesn't allow future dates (the API can't tell the user's "today"). At most one per user and
+  medication for now (`UNIQUE (UserId, MedicationId)`, so `PUT` replaces); `VialId` is the key
+  so a vial history can be added later. Part of backup/restore, where the `vials` section is
+  optional so older backups still restore.
 - **Schema changes are DbUp migrations** — numbered SQL scripts in `Api/Migrations/`
   (`0002_AddSomething.sql`, …), embedded in the assembly and run in filename order on
   startup by `DataAccess.DatabaseMigrator` (also in the integration and repository

@@ -94,6 +94,20 @@ Not a classic report. It should show, per medication:
   - Proper authentication: replace the per-user API keys (typed in and kept in localStorage)
     with real sign-in.
   - Vial management / calculation page: track vials and calculate doses from them.
+    - CURRENT VIAL DONE (first pass): 4th page "Current vial" (pageName vial, vial-page ->
+      VialService -> GET /api/vials, PUT /api/vials/{medicationName}). Per user and medication:
+      InitialAmountMg and InitialVolumeMl (Vials table, migration 0004), both > 0, and
+      StartedOn (a date; the page shows the age in days, 0 on the start day, and doesn't
+      allow future dates; a new vial defaults to today). One vial per
+      user per medication for now (UNIQUE (UserId, MedicationId); VialId is the key so a vial
+      history can come later). Save + Reset (back to the last saved values). Shares the
+      ?medication= parameter with the Medication page. Included in backup/restore (optional
+      section, so older backups still restore).
+    - DOSE CALCULATOR DONE (first pass): vial-dose-calculator component, for now below the
+      form on the Current vial page. It fetches nothing - the host passes the saved vial and a
+      default dose (the last dose of that medication, from DoseService.doseRecords$) - so it
+      can be moved, e.g. next to Add dose on the Medication page. Shows concentration (mg/ml)
+      and the draw: ml = dose mg / (vial mg / vial ml), 2 dp, plus U-100 units (ml x 100).
 
 Other
 -----
